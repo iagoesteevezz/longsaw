@@ -1,0 +1,31 @@
+# Dependencias y builds
+node_modules
+dist
+coverage
+*.tsbuildinfo
+.vite
+.vitest-cache
+
+# Secretos: solo se versiona la plantilla
+.env
+.env.*
+!.env.example
+*.local
+
+# Configuración local de Claude Code (permisos de esta máquina)
+.claude/settings.local.json
+
+# Chats reales: nunca al repo. Los de ejemplo inventados viven en tests/fixtures/
+/chats/
+/private/
+/*.txt
+*.zip
+WhatsApp Chat*.txt
+Chat de WhatsApp*.txt
+_chat.txt
+
+# Restos locales
+_to_delete/
+*.log
+.DS_Store
+Thumbs.db

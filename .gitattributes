@@ -1,0 +1,2 @@
+# Fixtures que prueban finales de línea concretos: se guardan byte a byte.
+tests/fixtures/*crlf* -text

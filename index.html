@@ -4,6 +4,10 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="theme-color" content="#075e54" />
+    <!-- La web ya tiene tema oscuro propio: que el navegador y extensiones como Dark Reader no lo fuercen. -->
+    <meta name="color-scheme" content="light dark" />
+    <meta name="darkreader-lock" />
+    <script src="/theme-init.js"></script>
     <meta name="description" content="Analiza tu chat de WhatsApp en tu propio navegador y descubre cómo es vuestra relación en números." />
     <!-- Privacidad: sin analíticas, sin Google Fonts, sin CDNs. La CSP estricta se envía como cabecera en producción (public/_headers): en una <meta> rompería el HMR de Vite. -->
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />

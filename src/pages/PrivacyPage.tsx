@@ -2,10 +2,14 @@
  * Página de privacidad en lenguaje claro. Debe mantenerse sincronizada con el
  * comportamiento real del código (ver docs/ARCHITECTURE.md §Privacidad).
  */
+import { ThemeToggle } from '../components/ThemeToggle';
 export function PrivacyPage({ onBack }: { onBack: () => void }) {
   return (
     <main className="mx-auto max-w-xl px-5 pb-16 pt-8">
-      <button type="button" onClick={onBack} className="rounded-full bg-white px-4 py-2 text-sm font-bold">← Volver</button>
+      <div className="flex items-center justify-between">
+        <button type="button" onClick={onBack} className="rounded-full bg-surface px-4 py-2 text-sm font-bold">← Volver</button>
+        <ThemeToggle variant="solid" />
+      </div>
       <h1 className="mt-6 text-5xl font-extrabold leading-none">Privacidad, en claro</h1>
 
       <Block color="bg-card-green" title="Tu chat no sale de tu dispositivo">

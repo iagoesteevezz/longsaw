@@ -8,6 +8,7 @@ import type { Saved } from '../lib/storage';
 import { ChatToChart } from '../components/ChatToChart';
 import { useReveal } from '../components/ui';
 import { Wordmark } from '../components/Logo';
+import { ThemeToggle } from '../components/ThemeToggle';
 
 function Reveal({ children, className = '', variant = '' }: { children: ReactNode; className?: string; variant?: '' | 'from-left' | 'from-right' | 'zoom' }) {
   const ref = useReveal<HTMLDivElement>();
@@ -124,6 +125,7 @@ export function UploadPage(props: {
                 <GitHubIcon className="h-5 w-5" />
                 <span className="hidden sm:inline">iagoesteevezz</span>
               </a>
+              <ThemeToggle />
             </nav>
           </header>
 
@@ -198,7 +200,7 @@ export function UploadPage(props: {
           ].map(([t, d], i) => (
             <li key={t} className={i % 2 ? 'self-end' : 'self-start'}>
               <Reveal variant={i % 2 ? 'from-right' : 'from-left'}>
-                <div className={`max-w-md px-5 py-4 shadow-[0_2px_0_rgb(0_0_0/0.05)] ${i % 2 ? 'rounded-3xl rounded-tr-md bg-wa-bubble' : 'rounded-3xl rounded-tl-md bg-white'}`}>
+                <div className={`max-w-md px-5 py-4 shadow-[0_2px_0_rgb(0_0_0/0.05)] ${i % 2 ? 'rounded-3xl rounded-tr-md bg-wa-bubble' : 'rounded-3xl rounded-tl-md bg-surface'}`}>
                   <p className="text-lg font-extrabold leading-tight">
                     <span className="mr-2 text-wa-teal">{i + 1}.</span>
                     {t}
@@ -212,7 +214,7 @@ export function UploadPage(props: {
       </section>
 
       {/* --------------------------- Qué descubrirás -------------------------- */}
-      <section className="bg-white/55 py-20">
+      <section className="bg-surface/55 py-20">
         <div className="mx-auto max-w-5xl px-5 sm:px-8">
           <Reveal>
             <h2 className="text-balance text-4xl font-extrabold leading-none tracking-tight sm:text-5xl">18 tarjetas sobre vosotros</h2>
@@ -230,7 +232,7 @@ export function UploadPage(props: {
           <div className="mt-12 flex flex-col gap-3">
             {SAMPLE_LINES.map((l, i) => (
               <Reveal key={l} variant={i % 2 ? 'from-right' : 'from-left'} className={i % 2 ? 'self-end' : 'self-start'}>
-                <p className="bubble-in max-w-md text-lg !bg-white">{l}</p>
+                <p className="bubble-in max-w-md text-lg !bg-surface">{l}</p>
               </Reveal>
             ))}
           </div>

@@ -12,6 +12,8 @@ import { flushSync } from 'react-dom';
 import type { AnalysisOptions, CaptionKey, Report } from '../core/types';
 import { NamesProvider, displayNames, fillNames } from '../lib/names';
 import { Wordmark } from '../components/Logo';
+import { ThemeToggle } from '../components/ThemeToggle';
+import { applyTheme, currentTheme } from '../lib/theme';
 import { CARD_COLOR, CARD_ORDER, RELATIONS, cardCopy, isCardVisible, type CardId } from '../lib/relations';
 import { exportPdf, nodeToPng, shareOrDownload } from '../lib/exporters';
 import { Card, CountUp, FINISH_ANIMATIONS, useReveal } from '../components/ui';
@@ -40,6 +42,9 @@ export function ReportPage(props: {
   /** Ejecuta `fn` con la UI en "modo exportación" y la restaura siempre. */
   async function withExportMode<T>(fn: () => Promise<T>): Promise<T> {
     flushSync(() => setHidden(!showNamesOnShare));
+    // Imágenes y PDF siempre en tema claro, como la portada del PDF.
+    const theme = currentTheme();
+    applyTheme('light');
     document.documentElement.dataset.exporting = 'true';
     dispatchEvent(new Event(FINISH_ANIMATIONS));
     // Dos frames: uno para aplicar estilos, otro para que el layout se asiente.
@@ -48,6 +53,7 @@ export function ReportPage(props: {
       return await fn();
     } finally {
       delete document.documentElement.dataset.exporting;
+      applyTheme(theme);
       setHidden(false);
     }
   }
@@ -116,11 +122,12 @@ export function ReportPage(props: {
       <div className="mx-auto max-w-xl px-4 pb-24">
         {/* Barra superior */}
         <nav className="export-hide sticky top-0 z-30 -mx-4 flex items-center gap-2 overflow-x-auto bg-paper/85 px-4 py-3 backdrop-blur">
-          <button type="button" onClick={props.onNew} className="press shrink-0 text-xl text-wa-dark" aria-label="longsaw: analizar otro chat">
+          <button type="button" onClick={props.onNew} className="press shrink-0 text-xl text-wa-dark dark:text-wa-green" aria-label="longsaw: analizar otro chat">
             <Wordmark markClassName="h-8 w-8" />
           </button>
           <span className="flex-1" />
-          <button type="button" onClick={downloadPdf} className="press shrink-0 rounded-full bg-white px-4 py-2 text-sm font-bold">⬇︎ PDF</button>
+          <ThemeToggle variant="solid" />
+          <button type="button" onClick={downloadPdf} className="press shrink-0 rounded-full bg-surface px-4 py-2 text-sm font-bold">⬇︎ PDF</button>
           <button type="button" onClick={props.onWipe} className="press shrink-0 rounded-full bg-card-red px-4 py-2 text-sm font-bold" aria-label="Borrar todo">🗑️<span className="hidden sm:inline"> Borrar todo</span></button>
         </nav>
 
@@ -162,7 +169,7 @@ export function ReportPage(props: {
         </div>
 
         {/* Ajustes de privacidad del informe */}
-        <section className="export-hide mt-6 space-y-3 rounded-[2rem] bg-white p-6">
+        <section className="export-hide mt-6 space-y-3 rounded-[2rem] bg-surface p-6">
           <label className="flex items-center justify-between gap-4 font-bold">
             <span>Mostrar nombres al compartir o descargar</span>
             <input type="checkbox" checked={showNamesOnShare} onChange={(e) => setShowNamesOnShare(e.target.checked)} className="h-6 w-6 accent-wa-dark" />

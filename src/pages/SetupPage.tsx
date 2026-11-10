@@ -15,6 +15,7 @@ import type { ChatSummary } from '../lib/workerClient';
 import { RELATIONS } from '../lib/relations';
 import { Ticks } from '../components/ChatToChart';
 import { LogoMark } from '../components/Logo';
+import { ThemeToggle } from '../components/ThemeToggle';
 
 type Step = 'me' | 'name' | 'relation' | 'alias' | 'confirm';
 const ANSWER_ORDER = ['me', 'name', 'relation', 'alias'] as const;
@@ -180,14 +181,15 @@ export function SetupPage(props: { summary: ChatSummary; onSubmit: (o: AnalysisO
             <p className="font-brand text-xl font-semibold">longsaw</p>
             <p className="text-sm font-semibold text-white/75" aria-hidden>{typing ? 'escribiendo…' : 'en línea'}</p>
           </div>
+          <ThemeToggle />
         </div>
       </header>
 
       {/* ------------------------------ Mensajes ------------------------------ */}
       <div className="setup-chat min-h-0 flex-1 overflow-y-auto">
         <div className="mx-auto flex max-w-2xl flex-col gap-1.5 px-3 pb-4 pt-4 sm:px-5" role="log" aria-live="polite">
-          <p className="mx-auto mb-1 rounded-lg bg-white/80 px-3 py-1 text-xs font-bold uppercase tracking-wide text-ink/60">Hoy</p>
-          <p className="mx-auto mb-3 max-w-sm rounded-xl bg-[#fff3c4] px-4 py-2 text-center text-[13px] font-semibold leading-snug text-[#54451a]">
+          <p className="mx-auto mb-1 rounded-lg bg-surface/80 px-3 py-1 text-xs font-bold uppercase tracking-wide text-ink/60">Hoy</p>
+          <p className="mx-auto mb-3 max-w-sm rounded-xl bg-[#fff3c4] dark:bg-[#182229] px-4 py-2 text-center text-[13px] font-semibold leading-snug text-[#54451a] dark:text-[#ffd279]">
             🔒 Este chat se analiza en tu navegador. Nada se sube y nadie más puede leerlo.
           </p>
 
@@ -196,9 +198,9 @@ export function SetupPage(props: { summary: ChatSummary; onSubmit: (o: AnalysisO
             const first = !prev || prev.side !== it.side;
             if (it.side === 'bot') {
               return (
-                <div key={it.id} className={`chat-in max-w-[85%] self-start rounded-2xl bg-white px-3.5 py-2 text-[15px] font-semibold leading-snug shadow-[0_1px_0.5px_rgb(11_20_26/0.13)] sm:max-w-[70%] ${first ? 'mt-2 rounded-tl-sm' : ''}`}>
+                <div key={it.id} className={`chat-in max-w-[85%] self-start rounded-2xl bg-surface px-3.5 py-2 text-[15px] font-semibold leading-snug shadow-[0_1px_0.5px_rgb(11_20_26/0.13)] sm:max-w-[70%] ${first ? 'mt-2 rounded-tl-sm' : ''}`}>
                   {it.node ?? it.text}
-                  <span className="ml-3 inline-block translate-y-1 text-[11px] font-semibold text-[#667781]">{time}</span>
+                  <span className="ml-3 inline-block translate-y-1 text-[11px] font-semibold text-muted">{time}</span>
                 </div>
               );
             }
@@ -213,7 +215,7 @@ export function SetupPage(props: { summary: ChatSummary; onSubmit: (o: AnalysisO
                 className={`chat-in group max-w-[85%] self-end rounded-2xl bg-wa-bubble px-3.5 py-2 text-left text-[15px] font-bold leading-snug shadow-[0_1px_0.5px_rgb(11_20_26/0.13)] transition hover:brightness-95 sm:max-w-[70%] ${first ? 'mt-2 rounded-tr-sm' : ''}`}
               >
                 {it.text}
-                <span className="ml-3 inline-flex translate-y-1 items-center gap-1 text-[11px] font-semibold text-[#667781]">
+                <span className="ml-3 inline-flex translate-y-1 items-center gap-1 text-[11px] font-semibold text-muted">
                   <span className="hidden group-hover:inline">cambiar ·</span>
                   {time} <Ticks read={read} />
                 </span>
@@ -231,7 +233,7 @@ export function SetupPage(props: { summary: ChatSummary; onSubmit: (o: AnalysisO
       </div>
 
       {/* -------------------------- Respuestas / teclado ------------------------- */}
-      <footer className="border-t border-ink/5 bg-[#f0ebe4] pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+      <footer className="border-t border-ink/5 bg-[#f0ebe4] dark:bg-[#1f2c33] pb-[max(0.75rem,env(safe-area-inset-bottom))]">
         <div className="mx-auto max-w-2xl px-3 pt-3 sm:px-5">
           {!settled ? (
             <Composer disabled placeholder="longsaw está escribiendo…" initial="" onSend={() => {}} />
@@ -270,14 +272,14 @@ export function SetupPage(props: { summary: ChatSummary; onSubmit: (o: AnalysisO
           ) : (
             <>
               {advanced && (
-                <div className="chat-in mb-3 rounded-2xl bg-white px-4 pb-4 pt-1">
+                <div className="chat-in mb-3 rounded-2xl bg-surface px-4 pb-4 pt-1">
                   <Range label="Nueva conversación tras un silencio de" value={gap} min={1} max={24} unit="h" onChange={setGap} />
                   <Range label="Contar “visto” si no responde en" value={seen} min={2} max={72} unit="h" onChange={setSeen} />
                   <Range label="Silencio largo / posible bloqueo a partir de" value={silence} min={2} max={30} unit="días" onChange={setSilence} />
                 </div>
               )}
               <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-                <button type="button" onClick={() => setAdvanced((v) => !v)} aria-expanded={advanced} className="press chip-in rounded-full bg-white px-5 py-3 font-extrabold text-wa-dark ring-1 ring-wa-teal/30 hover:bg-wa-bubble">
+                <button type="button" onClick={() => setAdvanced((v) => !v)} aria-expanded={advanced} className="press chip-in rounded-full bg-surface px-5 py-3 font-extrabold text-wa-dark dark:text-wa-green ring-1 ring-wa-teal/30 hover:bg-wa-bubble">
                   ⚙️ {advanced ? 'Ocultar ajustes' : 'Ajustes avanzados'}
                 </button>
                 <button
@@ -314,7 +316,7 @@ function Choice(p: { n: number; disabled?: boolean; onClick: () => void; childre
       disabled={p.disabled}
       onClick={p.onClick}
       style={{ animationDelay: `${p.n * 55}ms` }}
-      className="press chip-in rounded-full bg-white px-4 py-2.5 font-extrabold text-wa-dark shadow-[0_1px_0.5px_rgb(11_20_26/0.13)] ring-1 ring-wa-teal/30 hover:bg-wa-bubble disabled:opacity-40"
+      className="press chip-in rounded-full bg-surface px-4 py-2.5 font-extrabold text-wa-dark dark:text-wa-green shadow-[0_1px_0.5px_rgb(11_20_26/0.13)] ring-1 ring-wa-teal/30 hover:bg-wa-bubble disabled:opacity-40"
     >
       {p.children}
     </button>
@@ -339,7 +341,7 @@ function Composer(p: { placeholder: string; initial: string; disabled?: boolean;
         autoFocus={!p.disabled}
         placeholder={p.placeholder}
         aria-label={p.placeholder}
-        className="min-w-0 flex-1 rounded-full bg-white px-5 py-3 text-base font-bold outline-none ring-2 ring-transparent transition placeholder:font-semibold placeholder:text-ink/40 focus:ring-wa-teal disabled:bg-white/60"
+        className="min-w-0 flex-1 rounded-full bg-surface px-5 py-3 text-base font-bold outline-none ring-2 ring-transparent transition placeholder:font-semibold placeholder:text-ink/40 focus:ring-wa-teal disabled:bg-surface/60"
       />
       <button
         type="submit"
@@ -360,7 +362,7 @@ function Range(p: { label: string; value: number; min: number; max: number; unit
     <label className="mt-3 block">
       <span className="flex justify-between gap-3 text-sm font-bold">
         <span>{p.label}</span>
-        <span className="shrink-0 whitespace-nowrap rounded-full bg-wa-bubble px-2 text-wa-dark">{p.value} {p.unit}</span>
+        <span className="shrink-0 whitespace-nowrap rounded-full bg-wa-bubble px-2 text-wa-dark dark:text-wa-green">{p.value} {p.unit}</span>
       </span>
       <input type="range" min={p.min} max={p.max} value={p.value} onChange={(e) => p.onChange(Number(e.target.value))} className="mt-2 w-full accent-wa-teal" />
     </label>

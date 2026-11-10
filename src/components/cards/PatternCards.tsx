@@ -37,7 +37,7 @@ export function InterestBody({ r }: P) {
           <svg viewBox="0 0 300 90" className="w-full" role="img" aria-label="Evolución del interés de cada persona">
             {order.map((a) => {
               const pts = it.evolution.map((e, i) => `${20 + i * 86.7},${80 - (e.total[a] / 100) * 70}`).join(' ');
-              return <polyline key={a} className="line-draw" pathLength={1} points={pts} fill="none" stroke={color(a)} strokeWidth={4} strokeLinejoin="round" strokeLinecap="round" />;
+              return <polyline key={a} className="line-draw" pathLength={1} points={pts} fill="none" style={{ stroke: color(a) }} strokeWidth={4} strokeLinejoin="round" strokeLinecap="round" />;
             })}
             {it.evolution.map((e, i) => (
               <text key={i} x={20 + i * 86.7} y={89} fontSize={9} fontWeight={700} textAnchor="middle" opacity={0.6}>{e.label}</text>
@@ -57,7 +57,7 @@ export function InterestBody({ r }: P) {
           </thead>
           <tbody>
             {it.components.map((c) => (
-              <tr key={c.key} className="border-t border-black/10 align-top">
+              <tr key={c.key} className="border-t border-ink/10 align-top">
                 <td className="py-1.5 pr-2 font-bold">{c.label} ({Math.round(c.weight * 100)} %)</td>
                 {order.map((a) => (
                   <td key={a} className="py-1.5 pr-2">
@@ -138,7 +138,7 @@ export function SilenceBody({ r, days }: P & { days: number }) {
       {(uni.length > 0 || mutual.length > 0) && (
         <ul className="mt-6 space-y-2 text-sm font-semibold">
           {r.silences.slice(0, 5).map((s) => (
-            <li key={s.startTs} className="rounded-2xl bg-white/60 px-4 py-2">
+            <li key={s.startTs} className="rounded-2xl bg-surface/60 px-4 py-2">
               <b>{s.days} días</b> desde el {formatDate(s.startTs)} ·{' '}
               {s.onlySpeaker === null
                 ? 'silencio de los dos'
@@ -170,7 +170,7 @@ export function WordsBody({ r }: P) {
           <p className="mb-3 text-4xl leading-tight tracking-wider">{r.words.emojis[a].slice(0, 5).map((e) => e.word).join(' ') || '—'}</p>
           <ol className="space-y-1">
             {r.words.top[a].slice(0, 8).map((w, i) => (
-              <li key={w.word} className="flex items-baseline justify-between gap-3 rounded-xl bg-white/50 px-3 py-1.5 font-bold">
+              <li key={w.word} className="flex items-baseline justify-between gap-3 rounded-xl bg-surface/50 px-3 py-1.5 font-bold">
                 <span className="truncate"><span className="mr-2 opacity-50">{i + 1}</span>{w.word}</span>
                 <span className="text-sm opacity-60">{w.count}</span>
               </li>
@@ -192,7 +192,7 @@ export function SharedBody({ r }: P) {
         {r.words.shared.map((w, i) => (
           <span
             key={w.word}
-            className="animate-pop rounded-full bg-white px-4 py-2 font-extrabold shadow-sm"
+            className="animate-pop rounded-full bg-surface px-4 py-2 font-extrabold shadow-sm"
             style={{ fontSize: `${Math.max(1, 1.9 - i * 0.1)}rem`, animationDelay: `${i * 60}ms` }}
           >
             {w.word}
@@ -209,9 +209,9 @@ export function SharedBody({ r }: P) {
 /* ------------------------------- Flags ------------------------------- */
 
 const SEV: Record<Flag['severity'], { icon: string; label: string; cls: string }> = {
-  red: { icon: '🚩', label: 'Red flag', cls: 'bg-white' },
-  yellow: { icon: '⚠️', label: 'Ojo', cls: 'bg-white/70' },
-  green: { icon: '💚', label: 'Green flag', cls: 'bg-white/40' },
+  red: { icon: '🚩', label: 'Red flag', cls: 'bg-surface' },
+  yellow: { icon: '⚠️', label: 'Ojo', cls: 'bg-surface/70' },
+  green: { icon: '💚', label: 'Green flag', cls: 'bg-surface/40' },
 };
 
 export function FlagsBody({ r }: P) {

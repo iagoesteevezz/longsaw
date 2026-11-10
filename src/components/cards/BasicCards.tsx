@@ -57,7 +57,7 @@ export function ResponseBody({ r }: BodyProps) {
           return <BigStat key={a} label={names[a]} value={v} unit={u} color={color(a)} />;
         })}
       </div>
-      <dl className="mt-5 grid grid-cols-2 gap-4 rounded-2xl bg-white/50 px-4 py-3 text-sm">
+      <dl className="mt-5 grid grid-cols-2 gap-4 rounded-2xl bg-surface/50 px-4 py-3 text-sm">
         {order.map((a) => (
           <div key={a}>
             <dt className="font-bold opacity-70">Media de {names[a]}</dt>
@@ -196,8 +196,8 @@ export function TimelineBody({ r }: BodyProps) {
             return (
               <g key={m.month}>
                 <title>{`${formatMonth(m.month)}: ${names[order[0]]} ${m.counts[order[0]]}, ${names[order[1]]} ${m.counts[order[1]]}`}</title>
-                <rect className="bar-grow" style={{ animationDelay: `${i * 25}ms` }} x={x} y={H - h0} width={w} height={h0} rx={Math.min(3, w / 2)} fill={color(order[0])} />
-                <rect className="bar-grow" style={{ animationDelay: `${i * 25}ms` }} x={x} y={H - h0 - h1} width={w} height={h1} rx={Math.min(3, w / 2)} fill={color(order[1])} opacity={0.85} />
+                <rect className="bar-grow" style={{ animationDelay: `${i * 25}ms`, fill: color(order[0]) }} x={x} y={H - h0} width={w} height={h0} rx={Math.min(3, w / 2)} />
+                <rect className="bar-grow" style={{ animationDelay: `${i * 25}ms`, fill: color(order[1]) }} x={x} y={H - h0 - h1} width={w} height={h1} rx={Math.min(3, w / 2)} opacity={0.85} />
               </g>
             );
           })}
@@ -217,7 +217,7 @@ export function TimelineBody({ r }: BodyProps) {
       <p className="mt-6 mb-2 text-sm font-bold opacity-70">¿A qué hora habláis?</p>
       <svg viewBox="0 0 240 50" className="w-full" role="img" aria-label="Mensajes por hora del día">
         {hoursTotal.map((v, h) => (
-          <rect key={h} x={h * 10 + 1} y={40 - (v / hMax) * 38} width={8} height={(v / hMax) * 38 + 1} rx={2} fill="#075e54" opacity={0.25 + 0.75 * (v / hMax)}>
+          <rect key={h} x={h * 10 + 1} y={40 - (v / hMax) * 38} width={8} height={(v / hMax) * 38 + 1} rx={2} style={{ fill: 'var(--color-me)' }} opacity={0.25 + 0.75 * (v / hMax)}>
             <title>{`${h}:00 · ${v} mensajes`}</title>
           </rect>
         ))}

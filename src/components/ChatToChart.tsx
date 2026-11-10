@@ -112,7 +112,7 @@ export function ChatToChart() {
     <div ref={root} className="phone" aria-hidden>
       <div className="phone-screen">
         <div className="flex items-center gap-2.5 bg-wa-dark px-3 pb-2.5 pt-3.5 text-white">
-          <span className="grid h-8 w-8 place-items-center rounded-full bg-[#dfe5e7] text-sm font-extrabold text-wa-dark">S</span>
+          <span className="grid h-8 w-8 place-items-center rounded-full bg-[#dfe5e7] dark:bg-[#2a3942] text-sm font-extrabold text-wa-dark dark:text-wa-green">S</span>
           <span className="min-w-0 leading-tight">
             <span className="block text-sm font-bold">Sam</span>
             <span className="block text-[0.68rem] text-white/75">{s.typing ? 'escribiendo…' : 'en línea'}</span>
@@ -151,7 +151,7 @@ export function ChatToChart() {
         <div className={`report-sheet ${open ? 'open' : ''}`}>
           <p className="text-[0.7rem] font-bold text-wa-teal">Tu informe</p>
           <p className="mt-0.5 text-lg font-extrabold leading-tight text-ink">Escribís lo mismo, pero Sam se ríe más</p>
-          <div className="split mt-3 flex h-2.5 overflow-hidden rounded-full bg-[#eee]">
+          <div className="split mt-3 flex h-2.5 overflow-hidden rounded-full bg-ink/10">
             <span className="bg-wa-dark" style={{ width: open ? `${(mine / SCRIPT.length) * 100}%` : '0%' }} />
             <span className="bg-accent" style={{ width: open ? `${100 - (mine / SCRIPT.length) * 100}%` : '0%' }} />
           </div>

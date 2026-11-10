@@ -20,7 +20,7 @@ export function StyleBody({ r }: P) {
         {order.map((a) => {
           const s = r.insights.styles[a];
           return (
-            <div key={a} className="tile-hover rounded-3xl bg-white/60 p-5">
+            <div key={a} className="tile-hover rounded-3xl bg-surface/60 p-5">
               <p className="text-5xl" aria-hidden>{s.emoji}</p>
               <p className="mt-2 text-sm font-bold" style={{ color: color(a) }}>{names[a]}</p>
               <p className="text-2xl font-extrabold leading-tight">{s.label}</p>
@@ -36,7 +36,7 @@ export function StyleBody({ r }: P) {
           <h3 className="mt-6 mb-2 text-lg font-extrabold">Lo que notamos</h3>
           <ul className="space-y-2">
             {r.insights.noticed.map((n) => (
-              <li key={n} className="tile-hover rounded-2xl bg-white/50 px-4 py-2 font-semibold">{fill(n)}</li>
+              <li key={n} className="tile-hover rounded-2xl bg-surface/50 px-4 py-2 font-semibold">{fill(n)}</li>
             ))}
           </ul>
         </>
@@ -56,7 +56,7 @@ export function MeaningBody({ r }: P) {
         <div key={a.message.id} className="space-y-2">
           {a.context && <Quote e={a.context} compact maxLines={3} />}
           <Quote e={a.message} />
-          <div className="rounded-3xl bg-white/70 p-4">
+          <div className="rounded-3xl bg-surface/70 p-4">
             <p className="text-xs font-bold uppercase tracking-widest opacity-60">{a.pattern}</p>
             <p className="mt-1 font-bold leading-snug">{a.reading}</p>
           </div>
@@ -75,7 +75,7 @@ export function MoveBody({ r }: P) {
       <p className="num text-5xl sm:text-6xl">{move.title}</p>
       <ol className="mt-6 space-y-3">
         {move.steps.map((s, i) => (
-          <li key={s} className="tile-hover flex items-start gap-3 rounded-3xl bg-white/70 p-4 text-lg font-bold leading-snug">
+          <li key={s} className="tile-hover flex items-start gap-3 rounded-3xl bg-surface/70 p-4 text-lg font-bold leading-snug">
             <span className="num grid h-9 w-9 shrink-0 place-items-center rounded-full bg-wa-dark text-lg text-white">{i + 1}</span>
             <span className="pt-1">{s}</span>
           </li>

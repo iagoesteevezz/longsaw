@@ -25,7 +25,7 @@ function VersusRow({ icon, label, values, delay = 0 }: { icon: string; label: st
     <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 sm:gap-3">
       {order.map((a, side) => {
         const bar = (
-          <div className="h-3 flex-1 overflow-hidden rounded-full bg-white/50">
+          <div className="h-3 flex-1 overflow-hidden rounded-full bg-surface/50">
             <div
               className={`bar-fill h-full rounded-full ${side === 0 ? 'ml-auto' : ''}`}
               style={{ width: `${(values[a] / max) * 100}%`, background: color(a), animationDelay: `${delay}ms` }}
@@ -126,12 +126,12 @@ export function LexiconBody({ r }: P) {
           const caption = r.insights.captions[row.key];
           const c = chips(row.key);
           return (
-            <section key={row.key} className="tile-hover rounded-3xl bg-white/45 p-4">
+            <section key={row.key} className="tile-hover rounded-3xl bg-surface/45 p-4">
               <VersusRow icon={row.icon} label={row.label} values={lx[row.key] as Pair<number>} delay={i * 120} />
               {caption && <p className="mt-3 font-semibold leading-snug">{fill(caption)}</p>}
               {c.length > 0 && (
                 <div className="mt-3 flex flex-wrap gap-2">
-                  {c.map((t) => <span key={t} className="rounded-full bg-white/80 px-3 py-1 text-sm font-bold">{t}</span>)}
+                  {c.map((t) => <span key={t} className="rounded-full bg-surface/80 px-3 py-1 text-sm font-bold">{t}</span>)}
                 </div>
               )}
             </section>

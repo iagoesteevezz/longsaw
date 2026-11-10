@@ -11,9 +11,12 @@ import { LogoMark } from './Logo';
 
 /* ------------------------------ Colores ------------------------------ */
 
-/** Tú siempre en verde oscuro, la otra persona en morado: consistente en todo el informe. */
-export const ME_COLOR = '#075e54';
-export const OTHER_COLOR = '#7b2cbf';
+/**
+ * Tú siempre en verde, la otra persona en morado: consistente en todo el informe.
+ * Son variables CSS (cambian con el tema); en SVG van en `style`, no en atributos.
+ */
+export const ME_COLOR = 'var(--color-me)';
+export const OTHER_COLOR = 'var(--color-other)';
 export function usePersonColor() {
   const { me } = useNames();
   return (a: AuthorIndex) => (a === me ? ME_COLOR : OTHER_COLOR);
@@ -77,7 +80,7 @@ export function Card(props: {
         {props.onShare && (
           <button
             type="button"
-            className="export-hide press shrink-0 rounded-full bg-white/60 px-3 py-1.5 text-sm font-bold hover:bg-white"
+            className="export-hide press shrink-0 rounded-full bg-surface/60 px-3 py-1.5 text-sm font-bold hover:bg-surface"
             onClick={(e) => props.onShare!((e.currentTarget.closest('[data-card]') as HTMLElement)!)}
             aria-label={`Compartir tarjeta: ${props.kicker}`}
           >
@@ -181,7 +184,7 @@ export function VersusBar({ values, label }: { values: Pair<number>; label?: str
   return (
     <div>
       <div
-        className="flex h-5 w-full overflow-hidden rounded-full bg-white/50"
+        className="flex h-5 w-full overflow-hidden rounded-full bg-surface/50"
         role="img"
         aria-label={`${label ?? ''} ${names[0]} ${pct0} %, ${names[1]} ${100 - pct0} %`}
       >
@@ -205,7 +208,7 @@ export function Quote({ e, maxLines, compact }: { e: Excerpt; maxLines?: number;
     <figure className={`flex flex-col ${mine ? 'items-end' : 'items-start'}`}>
       <blockquote
         className={`max-w-[90%] whitespace-pre-line rounded-3xl px-4 py-3 font-semibold leading-snug shadow-sm ${
-          mine ? 'rounded-br-md bg-wa-bubble' : 'rounded-bl-md bg-white'
+          mine ? 'rounded-br-md bg-wa-bubble' : 'rounded-bl-md bg-surface'
         } ${compact ? 'text-sm' : 'text-base'}`}
         style={maxLines ? { display: '-webkit-box', WebkitLineClamp: maxLines, WebkitBoxOrient: 'vertical', overflow: 'hidden' } : undefined}
       >
@@ -220,7 +223,7 @@ export function Quote({ e, maxLines, compact }: { e: Excerpt; maxLines?: number;
 
 export function Pill({ children, tone = 'white' }: { children: ReactNode; tone?: 'white' | 'ink' }) {
   return (
-    <span className={`inline-flex items-center rounded-full px-3 py-1 text-sm font-bold ${tone === 'ink' ? 'bg-ink text-white' : 'bg-white/70'}`}>
+    <span className={`inline-flex items-center rounded-full px-3 py-1 text-sm font-bold ${tone === 'ink' ? 'bg-ink text-paper' : 'bg-surface/70'}`}>
       {children}
     </span>
   );
@@ -228,7 +231,7 @@ export function Pill({ children, tone = 'white' }: { children: ReactNode; tone?:
 
 export function Explain({ children, summary = '¿Cómo se calcula?' }: { children: ReactNode; summary?: string }) {
   return (
-    <details className="group mt-5 rounded-2xl bg-white/50 px-4 py-3 text-sm">
+    <details className="group mt-5 rounded-2xl bg-surface/50 px-4 py-3 text-sm">
       <summary className="cursor-pointer list-none font-bold">
         <span className="mr-1 inline-block transition group-open:rotate-90">›</span> {summary}
       </summary>

@@ -220,6 +220,19 @@ html.motion .reveal.is-visible .line-draw { animation: draw 1.6s 0.2s var(--ease
   from { opacity: 0; transform: translateY(10px) scale(0.92); }
 }
 
+/* ------------------- Preguntas previas, como un chat ------------------- */
+.setup-chat {
+  background-color: var(--color-wa-cream);
+  background-image: radial-gradient(rgb(7 94 84 / 0.07) 1px, transparent 1.4px);
+  background-size: 16px 16px;
+}
+.chat-in { animation: msg-in 0.42s var(--ease-out-expo) both; transform-origin: 0 100%; }
+.chat-in.self-end { transform-origin: 100% 100%; }
+@keyframes chip-in {
+  from { opacity: 0; transform: translateY(12px) scale(0.9); }
+}
+.chip-in { animation: chip-in 0.45s var(--ease-out-expo) both; }
+
 /* Fase "gráfica": cada burbuja se encoge en una barra de su misma longitud. */
 .morph .msg { max-height: 0.7rem; padding-block: 0; border-radius: 999px; box-shadow: none; }
 .morph .msg .body, .morph .msg .meta { opacity: 0; }

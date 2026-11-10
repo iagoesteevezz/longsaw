@@ -9,7 +9,7 @@
  * segunda persona ("Tú escribes" vs "Marta escribe"); con nombres en tercera
  * persona todas las plantillas funcionan.
  * Y también se limpian los nombres reales que aparezcan DENTRO de los
- * mensajes citados ("oye Marta…") con el mismo anonimizador que usa la IA.
+ * mensajes citados ("oye Marta…") con el anonimizador de core/anonymize.
  */
 import { createContext, useContext, useMemo, type ReactNode } from 'react';
 import type { AuthorIndex, Pair } from '../core/types';
@@ -31,6 +31,16 @@ function firstName(n: string) {
   return n.split(/\s+/)[0] || n;
 }
 
+/** Nombres visibles [persona 0, persona 1]. También los usa la portada del PDF. */
+export function displayNames(realNames: Pair<string>, me: AuthorIndex, alias: string, hidden: boolean): Pair<string> {
+  const myName = hidden ? 'Persona A' : firstName(realNames[me]);
+  const otherName = hidden ? 'Persona B' : alias || firstName(realNames[me === 0 ? 1 : 0]);
+  return me === 0 ? [myName, otherName] : [otherName, myName];
+}
+
+/** Sustituye {0}/{1} (marcadores del core) por nombres. */
+export const fillNames = (s: string, names: Pair<string>) => s.replace(/\{0\}/g, names[0]).replace(/\{1\}/g, names[1]);
+
 const Ctx = createContext<NamesCtx | null>(null);
 
 export function NamesProvider(props: {
@@ -42,15 +52,13 @@ export function NamesProvider(props: {
 }) {
   const { realNames, me, alias, hidden } = props;
   const value = useMemo<NamesCtx>(() => {
-    const myName = hidden ? 'Persona A' : firstName(realNames[me]);
-    const otherName = hidden ? 'Persona B' : alias || firstName(realNames[me === 0 ? 1 : 0]);
-    const names: Pair<string> = me === 0 ? [myName, otherName] : [otherName, myName];
+    const names = displayNames(realNames, me, alias, hidden);
     const scrub = makeScrubber(realNames, alias, me, { 0: names[0], 1: names[1] });
     return {
       names,
       me,
       hidden,
-      fill: (s) => s.replace(/\{0\}/g, names[0]).replace(/\{1\}/g, names[1]),
+      fill: (s) => fillNames(s, names),
       quote: (s) => (hidden ? scrub(s) : s),
     };
   }, [realNames, me, alias, hidden]);

@@ -21,6 +21,7 @@
  * testeables sin dependencias que además corren en el Worker.
  */
 import { detectLocale, LOCALES, type LocalePack } from './locales';
+import { detectMediaMarker } from './media';
 import type {
   AuthorIndex,
   DateOrder,
@@ -186,6 +187,9 @@ export function classify(text: string, systemMark: boolean, pack: LocalePack): C
     if (p.deletedByMe.some((re) => re.test(t))) return { kind: 'deleted', text: '', deletedByMe: true };
     if (p.deletedByOther.some((re) => re.test(t))) return { kind: 'deleted', text: '' };
   }
+  // Marcadores "omitido" en cualquier idioma y posición (ver media.ts).
+  const marker = detectMediaMarker(t);
+  if (marker) return { kind: 'media', mediaType: marker, text: '' };
   for (const p of packs) {
     for (const m of p.media) if (m.re.test(t)) return { kind: 'media', mediaType: m.type, text: '' };
     if (p.missedCall.some((re) => re.test(t))) return { kind: 'call', text: '' };

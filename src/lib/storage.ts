@@ -5,15 +5,14 @@
  * localStorage puede fallar (modo privado de Safari, cuota): try/catch siempre.
  */
 import type { AnalysisOptions, Report } from '../core/types';
-import type { AiResult } from '../core/anonymize';
 
-const KEY = 'longsaw:saved-report:v1';
+// v2: el informe cambió de forma (multimedia por tipo, léxico, frases). Un
+// informe v1 guardado no se puede pintar con las tarjetas nuevas.
+const KEY = 'longsaw:saved-report:v2';
 
 export interface Saved {
   report: Report;
   options: AnalysisOptions;
-  ai: AiResult | null;
-  unlocked: boolean;
   savedAt: number;
 }
 

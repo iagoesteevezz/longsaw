@@ -1,9 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { makeScrubber, buildAiPayload } from '../src/core/anonymize';
-import { parseWhatsApp } from '../src/core/parser';
-import { analyze } from '../src/core/analyze';
-import { generateDemoChat } from '../src/core/demo';
-import { DEFAULT_OPTIONS } from '../src/core/types';
+import { makeScrubber } from '../src/core/anonymize';
 
 describe('anonimizador', () => {
   const scrub = makeScrubber(['María José 🌸', 'Pablo Ruiz'], 'Mari', 1);
@@ -24,19 +20,5 @@ describe('anonimizador', () => {
     expect(t).toContain('[ENLACE]');
     expect(t).toContain('[DNI]');
     expect(t).toContain('[IBAN]');
-  });
-});
-
-describe('payload para la IA', () => {
-  const chat = parseWhatsApp(generateDemoChat());
-  const r = analyze(chat, { ...DEFAULT_OPTIONS, me: 0, relation: 'ligue', otherAlias: 'Samu' });
-  const payload = buildAiPayload(r, { me: 0, relation: 'ligue', otherAlias: 'Samu' });
-  const json = JSON.stringify(payload);
-
-  it('no contiene los nombres reales', () => {
-    expect(json).not.toMatch(/Alex|Sam\b|Samu/);
-  });
-  it('es pequeño (minimización): < 6 KB', () => {
-    expect(json.length).toBeLessThan(6000);
   });
 });

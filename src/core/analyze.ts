@@ -7,7 +7,9 @@
 import { LOCALES } from './locales';
 import type { AnalysisOptions, ParsedChat, Report } from './types';
 import { buildContext } from './stats/context';
-import { basicCounts, firstMessage, initiations, longest, responseStats } from './stats/basic';
+import { basicCounts, firstMessage, initiations, longest, mediaBreakdown, responseStats } from './stats/basic';
+import { lexicon } from './stats/lexicon';
+import { writeCopy } from './phrases/engine';
 import { timeline } from './stats/timeline';
 import { words } from './stats/words';
 import { runs, seen, silences } from './stats/silence';
@@ -32,6 +34,8 @@ export function analyze(chat: ParsedChat, opts: AnalysisOptions, onProgress: Pro
   onProgress('stats', 40);
   const tl = timeline(ctx);
   const w = words(ctx);
+  const lex = lexicon(ctx);
+  const long = longest(ctx);
   onProgress('patterns', 60);
   const rs = runs(msgs);
   const seenRes = seen(ctx, rs);
@@ -56,7 +60,7 @@ export function analyze(chat: ParsedChat, opts: AnalysisOptions, onProgress: Pro
 
   const firstTs = msgs[0].ts;
   const lastTs = msgs[msgs.length - 1].ts;
-  return {
+  const report: Report = {
     meta: {
       participants: [chat.participants[0].name, chat.participants[1].name],
       locale: chat.locale,
@@ -68,11 +72,14 @@ export function analyze(chat: ParsedChat, opts: AnalysisOptions, onProgress: Pro
       warnings: chat.warnings,
     },
     counts,
+    media: mediaBreakdown(ctx),
+    lexicon: lex,
     responses,
     firstMessage: firstMessage(ctx),
     initiations: { total: init.total, sessions: init.sessions },
     endings: init.endings,
-    longest: longest(ctx),
+    longest: long.excerpts,
+    longestWords: long.words,
     deleted,
     interest: interestRes,
     seen: seenRes,
@@ -81,6 +88,11 @@ export function analyze(chat: ParsedChat, opts: AnalysisOptions, onProgress: Pro
     timeline: tl,
     flags: fl,
     ambiguous: amb,
-    insights: ins,
+    insights: { ...ins, noticed: [], captions: {} },
   };
+  // Las frases se escriben al final: leen el informe ya completo.
+  const copy = writeCopy(report, opts);
+  report.insights.captions = copy.captions;
+  report.insights.noticed = copy.noticed;
+  return report;
 }

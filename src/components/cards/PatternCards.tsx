@@ -3,10 +3,9 @@
  * como estimación lo que es inferencia (visto, bloqueo).
  */
 import type { AuthorIndex, Flag, Report } from '../../core/types';
-import type { AiResult } from '../../core/anonymize';
 import { formatDate, formatDuration } from '../../core/format';
 import { useNames } from '../../lib/names';
-import { BigStat, Estimate, Explain, Quote, usePersonColor } from '../ui';
+import { BigStat, CountUp, Estimate, Explain, Quote, usePersonColor } from '../ui';
 
 interface P {
   r: Report;
@@ -28,7 +27,7 @@ export function InterestBody({ r }: P) {
     <>
       <div className="grid grid-cols-2 gap-4">
         {order.map((a) => (
-          <BigStat key={a} label={names[a]} value={it.total[a]} unit="/100" color={color(a)} />
+          <BigStat key={a} label={names[a]} value={<CountUp value={it.total[a]} />} unit="/100" color={color(a)} />
         ))}
       </div>
 
@@ -38,7 +37,7 @@ export function InterestBody({ r }: P) {
           <svg viewBox="0 0 300 90" className="w-full" role="img" aria-label="Evolución del interés de cada persona">
             {order.map((a) => {
               const pts = it.evolution.map((e, i) => `${20 + i * 86.7},${80 - (e.total[a] / 100) * 70}`).join(' ');
-              return <polyline key={a} points={pts} fill="none" stroke={color(a)} strokeWidth={4} strokeLinejoin="round" strokeLinecap="round" />;
+              return <polyline key={a} className="line-draw" pathLength={1} points={pts} fill="none" stroke={color(a)} strokeWidth={4} strokeLinejoin="round" strokeLinecap="round" />;
             })}
             {it.evolution.map((e, i) => (
               <text key={i} x={20 + i * 86.7} y={89} fontSize={9} fontWeight={700} textAnchor="middle" opacity={0.6}>{e.label}</text>
@@ -215,16 +214,13 @@ const SEV: Record<Flag['severity'], { icon: string; label: string; cls: string }
   green: { icon: '💚', label: 'Green flag', cls: 'bg-white/40' },
 };
 
-export function FlagsBody({ r, ai }: P & { ai: AiResult | null }) {
+export function FlagsBody({ r }: P) {
   const { fill } = useNames();
   if (r.flags.length === 0) return <p className="text-xl font-extrabold">Ni red ni green flags claras: un chat bastante neutro.</p>;
   const reds = r.flags.filter((f) => f.severity === 'red').length;
   return (
     <>
       <p className="num mb-5 text-6xl">{reds} 🚩</p>
-      {ai?.flagsComment && (
-        <p className="mb-5 rounded-2xl bg-white/70 px-4 py-3 font-semibold leading-snug">✨ {ai.flagsComment}</p>
-      )}
       <ul className="space-y-4">
         {r.flags.map((f) => (
           <li key={f.id} className={`rounded-3xl p-4 ${SEV[f.severity].cls}`}>

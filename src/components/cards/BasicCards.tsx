@@ -1,6 +1,6 @@
 /**
- * Cuerpos de las tarjetas gratuitas (1-6 y 12). El marco (color, título,
- * bloqueo, compartir) lo pone <Card> desde la página del informe.
+ * Cuerpos de las tarjetas básicas (1-6 y la línea temporal). El marco (color,
+ * título, comentario, compartir) lo pone <Card> desde la página del informe.
  */
 import type { AuthorIndex, Report } from '../../core/types';
 import { durationParts, formatDate, formatDuration, formatMonth, nf } from '../../core/format';
@@ -36,7 +36,7 @@ export function MessagesBody({ r }: BodyProps) {
       <div className="mt-5 flex flex-wrap gap-2">
         {order.map((a) => (
           <Pill key={a}>
-            {names[a]}: {r.counts.media[a]} 📎 · {r.counts.calls[a]} 📞
+            {names[a]}: {nf.format(r.counts.questions[a])} ❓ · {r.counts.calls[a]} 📞
           </Pill>
         ))}
       </div>
@@ -50,25 +50,29 @@ export function ResponseBody({ r }: BodyProps) {
   const order = useOrder();
   return (
     <>
+      <p className="mb-3 text-sm font-bold uppercase tracking-wider opacity-70">Mediana · lo que tarda normalmente</p>
       <div className="grid grid-cols-2 gap-4">
         {order.map((a) => {
           const [v, u] = durationParts(r.responses[a].medianMs);
-          return (
-            <BigStat
-              key={a}
-              label={names[a]}
-              value={v}
-              unit={u}
-              color={color(a)}
-              sub={<>media {formatDuration(r.responses[a].meanMs)}</>}
-            />
-          );
+          return <BigStat key={a} label={names[a]} value={v} unit={u} color={color(a)} />;
         })}
       </div>
-      <Explain>
+      <dl className="mt-5 grid grid-cols-2 gap-4 rounded-2xl bg-white/50 px-4 py-3 text-sm">
+        {order.map((a) => (
+          <div key={a}>
+            <dt className="font-bold opacity-70">Media de {names[a]}</dt>
+            <dd className="text-lg font-extrabold">{formatDuration(r.responses[a].meanMs)}</dd>
+          </div>
+        ))}
+      </dl>
+      <Explain summary="¿Mediana o media?">
         <p>
-          Mostramos la <b>mediana</b> (la respuesta “típica”): un par de respuestas de 8 horas no la distorsionan.
-          La <b>media</b> sí se dispara con esas respuestas lentas, por eso la ponemos pequeña debajo.
+          La <b>mediana</b> (el número grande) es la respuesta típica: la mitad de las veces contesta más rápido y la otra mitad más
+          lento. Un par de respuestas de 8 horas no la mueven.
+        </p>
+        <p>
+          La <b>media</b> (abajo) suma todos los tiempos y divide: unas pocas respuestas muy lentas la disparan. Por eso suele ser
+          bastante mayor que la mediana.
         </p>
         <p>
           Solo contamos como respuesta un cambio de persona dentro de la misma conversación. Si pasan más de
@@ -130,7 +134,7 @@ export function LongestBody({ r }: BodyProps) {
         r.longest[a] ? (
           <div key={a}>
             <p className="mb-2 text-sm font-bold opacity-70">
-              {names[a]} · {nf.format(r.longest[a]!.text.split(/\s+/).length)}{r.longest[a]!.text.endsWith('…') ? '+' : ''} palabras
+              {names[a]} · {nf.format(r.longestWords[a])} palabras
             </p>
             <Quote e={r.longest[a]!} maxLines={10} />
           </div>
@@ -146,22 +150,13 @@ export function DeletedBody({ r }: BodyProps) {
   const { names } = useNames();
   const color = usePersonColor();
   const order = useOrder();
-  const d = r.deleted;
-  const top: AuthorIndex = d[0] >= d[1] ? 0 : 1;
   return (
     <>
       <div className="grid grid-cols-2 gap-4">
         {order.map((a) => (
-          <BigStat key={a} label={names[a]} value={d[a]} unit="🗑️" color={color(a)} />
+          <BigStat key={a} label={names[a]} value={<CountUp value={r.deleted[a]} />} unit="🗑️" color={color(a)} />
         ))}
       </div>
-      <p className="mt-6 text-lg font-bold">
-        {d[0] + d[1] === 0
-          ? 'Nadie ha borrado nada. Transparencia total (o mucha seguridad en sí mismos).'
-          : d[0] === d[1]
-            ? 'Empate técnico en arrepentimientos.'
-            : `${names[top]} es quien más se arrepiente.`}
-      </p>
       <Explain summary="¿Cómo lo sabemos?">
         <p>WhatsApp deja en el export “Eliminaste este mensaje” / “Se eliminó este mensaje” (y sus versiones en inglés). El contenido borrado no está en el archivo: nadie puede recuperarlo, tampoco nosotros.</p>
       </Explain>
@@ -201,8 +196,8 @@ export function TimelineBody({ r }: BodyProps) {
             return (
               <g key={m.month}>
                 <title>{`${formatMonth(m.month)}: ${names[order[0]]} ${m.counts[order[0]]}, ${names[order[1]]} ${m.counts[order[1]]}`}</title>
-                <rect x={x} y={H - h0} width={w} height={h0} rx={Math.min(3, w / 2)} fill={color(order[0])} />
-                <rect x={x} y={H - h0 - h1} width={w} height={h1} rx={Math.min(3, w / 2)} fill={color(order[1])} opacity={0.85} />
+                <rect className="bar-grow" style={{ animationDelay: `${i * 25}ms` }} x={x} y={H - h0} width={w} height={h0} rx={Math.min(3, w / 2)} fill={color(order[0])} />
+                <rect className="bar-grow" style={{ animationDelay: `${i * 25}ms` }} x={x} y={H - h0 - h1} width={w} height={h1} rx={Math.min(3, w / 2)} fill={color(order[1])} opacity={0.85} />
               </g>
             );
           })}
@@ -222,7 +217,7 @@ export function TimelineBody({ r }: BodyProps) {
       <p className="mt-6 mb-2 text-sm font-bold opacity-70">¿A qué hora habláis?</p>
       <svg viewBox="0 0 240 50" className="w-full" role="img" aria-label="Mensajes por hora del día">
         {hoursTotal.map((v, h) => (
-          <rect key={h} x={h * 10 + 1} y={40 - (v / hMax) * 38} width={8} height={(v / hMax) * 38 + 1} rx={2} fill="#1b1523" opacity={0.25 + 0.75 * (v / hMax)}>
+          <rect key={h} x={h * 10 + 1} y={40 - (v / hMax) * 38} width={8} height={(v / hMax) * 38 + 1} rx={2} fill="#075e54" opacity={0.25 + 0.75 * (v / hMax)}>
             <title>{`${h}:00 · ${v} mensajes`}</title>
           </rect>
         ))}

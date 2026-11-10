@@ -17,14 +17,12 @@ export function PrivacyPage({ onBack }: { onBack: () => void }) {
         algunas frases citadas, nunca el chat entero) en el almacenamiento local de tu navegador. El botón “Borrar todo” lo elimina
         y destruye el proceso que tenía el chat en memoria.
       </Block>
-      <Block color="bg-card-blue" title="La IA es opcional y ves lo que se envía">
-        Solo si lo aceptas, enviamos a nuestro servidor un resumen de números y como mucho unas 20 frases cortas, con nombres,
-        teléfonos, emails, enlaces, DNI e IBAN sustituidos. Antes de enviar ves el contenido exacto y puedes quitar frases. Nuestro
-        servidor lo reenvía a Anthropic (Claude) para generar la interpretación y no lo guarda ni lo registra. Anthropic no usa
-        los datos enviados por API para entrenar modelos.
+      <Block color="bg-card-blue" title="Sin IA externa ni pagos">
+        Los textos del informe salen de reglas y de un banco de frases que viaja con la propia web: nada se envía a ningún modelo de
+        IA ni a ningún servidor. La web es gratuita y no hay cuentas, así que no hay nada que pagar ni datos de pago que guardar.
       </Block>
       <Block color="bg-card-pink" title="Sin rastreadores">
-        No usamos cookies, analíticas, píxeles ni fuentes o scripts de terceros.
+        No usamos cookies, analíticas, píxeles ni fuentes o scripts de terceros. La web no hace ninguna petición a otros dominios.
       </Block>
       <Block color="bg-card-lavender" title="Sobre la otra persona">
         Un chat también es de la otra persona. Úsalo con cabeza: comparte tarjetas con los nombres ocultos (viene así por defecto)

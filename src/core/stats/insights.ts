@@ -1,6 +1,6 @@
 /**
- * Tarjetas 14 ("Estilo y lo que notamos") y 16 ("The move") en versión por
- * reglas. Funcionan SIN IA; la IA (opt-in) solo las enriquece.
+ * Tarjetas 14 ("Estilo") y 16 ("The move") por reglas. "Lo que notamos" y
+ * los comentarios de cada tarjeta salen del banco de frases (core/phrases).
  *
  * Tono: entretenimiento con matices. Nunca diagnosticamos: hablamos de
  * "estilos" que "recuerdan a" conceptos de la teoría del apego, siempre
@@ -74,35 +74,6 @@ function styleFor(a: AuthorIndex, i: Inputs): Style {
   return { label: 'Tranqui y presente', emoji: '🌿', traits: [...traits, `Ritmo constante, sin extremos.${att('“seguro”')}`] };
 }
 
-function noticed(i: Inputs): string[] {
-  const out: string[] = [];
-  const [c0, c1] = i.counts.messages;
-  const more: AuthorIndex = c0 >= c1 ? 0 : 1;
-  const ratio = Math.max(c0, c1) / Math.max(1, Math.min(c0, c1));
-  if (ratio >= 1.3) out.push(`${P(more)} escribe ${ratio.toFixed(1).replace('.', ',')} veces más mensajes.`);
-  else out.push('Escribís prácticamente lo mismo: el volumen está muy repartido.');
-
-  for (const a of [0, 1] as AuthorIndex[]) {
-    const h = i.timeline.hours[a];
-    const peak = h.indexOf(Math.max(...h));
-    if (Math.max(...h) > 0) out.push(`La hora favorita de ${P(a)} para escribir: las ${peak}:00.`);
-  }
-  const [e0, e1] = i.init.endings;
-  if (e0 + e1 >= 10) {
-    const closer: AuthorIndex = e0 >= e1 ? 0 : 1;
-    out.push(`${P(closer)} suele tener la última palabra (${Math.round((Math.max(e0, e1) / (e0 + e1)) * 100)} % de las conversaciones).`);
-  }
-  const [md0, md1] = i.counts.media;
-  if (md0 + md1 >= 20) {
-    const m: AuthorIndex = md0 >= md1 ? 0 : 1;
-    out.push(`${P(m)} es quien más fotos, audios y stickers manda (${Math.max(md0, md1)}).`);
-  }
-  const wd = i.timeline.weekdays[0].map((x, k) => x + i.timeline.weekdays[1][k]);
-  const days = ['lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábados', 'domingos'];
-  out.push(`Vuestro día: los ${days[wd.indexOf(Math.max(...wd))]}.`);
-  return out.slice(0, 6);
-}
-
 const MOVES: Record<Group, Record<Situation, { title: string; steps: string[] }>> = {
   pareja: {
     balanced: { title: 'Cuidad lo que funciona', steps: ['Mantened el ritmo: está equilibrado.', 'Saca algún tema nuevo de los que salen en “vuestro idioma”.', 'Proponed un plan fuera del móvil esta semana.'] },
@@ -148,7 +119,7 @@ const MOVES: Record<Group, Record<Situation, { title: string; steps: string[] }>
   },
 };
 
-export function insights(i: Inputs): Report['insights'] {
+export function insights(i: Inputs): Pick<Report['insights'], 'styles' | 'move'> {
   const me = i.ctx.opts.me;
   const o = other(me);
   const [im, io] = [i.interest.total[me], i.interest.total[o]];
@@ -168,8 +139,7 @@ export function insights(i: Inputs): Report['insights'] {
     steps: tpl.steps.filter(Boolean).map((s) => s.replaceAll('{o}', P(o))),
   };
   return {
-    styles: [styleFor(0, i), styleFor(1, i)],
-    noticed: noticed(i),
+    styles: [styleFor(0, i), styleFor(1, i)] as Pair<Style>,
     move,
   };
 }

@@ -20,6 +20,8 @@ export type CardId =
   | 'response'
   | 'first'
   | 'initiator'
+  | 'media'
+  | 'lexicon'
   | 'longest'
   | 'deleted'
   | 'interest'
@@ -37,7 +39,7 @@ const romantic = (r: Relation) => r === 'pareja' || r === 'ex' || r === 'ligue';
 
 /** Orden del informe (de arriba abajo). */
 export const CARD_ORDER: CardId[] = [
-  'messages', 'response', 'first', 'initiator', 'longest', 'deleted', 'timeline',
+  'messages', 'response', 'first', 'initiator', 'media', 'lexicon', 'longest', 'deleted', 'timeline',
   'interest', 'seen', 'silence', 'words', 'shared', 'flags', 'style', 'meaning', 'move',
 ];
 
@@ -56,6 +58,8 @@ export function cardCopy(id: CardId, r: Relation): Copy {
     response: { kicker: 'Tiempo de respuesta', title: rom ? '¿Quién está más pendiente del móvil?' : '¿Quién contesta antes?' },
     first: { kicker: 'El primer mensaje', title: 'Así empezó todo' },
     initiator: { kicker: 'Quién inicia', title: rom ? '¿Quién escribe primero?' : '¿Quién saca la conversación?' },
+    media: { kicker: 'Fotos, audios y stickers', title: 'Lo que no cabe en palabras' },
+    lexicon: { kicker: 'Risas, cariño y pullitas', title: r === 'trabajo' ? 'El tono del chat' : 'Cómo os habláis' },
     longest: { kicker: 'Mensaje más largo', title: 'El testamento' },
     deleted: { kicker: 'Mensajes eliminados', title: 'Lo que nunca sabremos' },
     timeline: { kicker: 'Cómo fue', title: 'Vuestra historia en el chat' },
@@ -83,15 +87,17 @@ export function cardCopy(id: CardId, r: Relation): Copy {
 }
 
 export const CARD_COLOR: Record<CardId, string> = {
-  messages: 'bg-card-pink',
+  messages: 'bg-card-mint',
   response: 'bg-card-blue',
   first: 'bg-card-yellow',
   initiator: 'bg-card-green',
+  media: 'bg-card-sky',
+  lexicon: 'bg-card-pink',
   longest: 'bg-card-lavender',
   deleted: 'bg-card-peach',
   timeline: 'bg-card-cream',
   interest: 'bg-card-mint',
-  seen: 'bg-card-sky',
+  seen: 'bg-card-blue',
   silence: 'bg-card-stone',
   words: 'bg-card-lilac',
   shared: 'bg-card-coral',

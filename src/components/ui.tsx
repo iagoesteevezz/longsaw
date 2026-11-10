@@ -10,10 +10,12 @@ import { useNames } from '../lib/names';
 
 /* ------------------------------ Colores ------------------------------ */
 
-/** Tú siempre en tinta, la otra persona en morado: consistente en todo el informe. */
+/** Tú siempre en verde oscuro, la otra persona en morado: consistente en todo el informe. */
+export const ME_COLOR = '#075e54';
+export const OTHER_COLOR = '#7b2cbf';
 export function usePersonColor() {
   const { me } = useNames();
-  return (a: AuthorIndex) => (a === me ? '#1b1523' : '#7b2cbf');
+  return (a: AuthorIndex) => (a === me ? ME_COLOR : OTHER_COLOR);
 }
 
 /* --------------------------- Aparecer al ver -------------------------- */
@@ -43,25 +45,26 @@ export function useReveal<T extends HTMLElement>() {
 
 export function Card(props: {
   id: string;
+  /** Posición en la lista: alterna la dirección de entrada. */
+  index?: number;
   kicker: string;
   title: string;
   color: string;
   children: ReactNode;
-  locked?: boolean;
-  onUnlock?: () => void;
+  /** Frase del banco (core/phrases); usa {0}/{1}. */
+  caption?: string;
   onShare?: (el: HTMLElement) => void;
-  badge?: ReactNode;
   footnote?: ReactNode;
 }) {
   const ref = useReveal<HTMLElement>();
+  const { fill } = useNames();
   return (
     <section
       ref={ref}
       id={`card-${props.id}`}
       data-card={props.id}
-      data-locked={props.locked ? 'true' : 'false'}
       aria-labelledby={`card-${props.id}-title`}
-      className={`reveal relative overflow-hidden rounded-[2rem] ${props.color} p-6 shadow-[0_2px_0_rgba(0,0,0,0.06)] sm:p-8`}
+      className={`reveal card-lift relative overflow-hidden rounded-[2rem] ${props.color} p-6 sm:p-8 ${(props.index ?? 0) % 2 ? 'from-right' : 'from-left'}`}
     >
       <header className="mb-5 flex items-start justify-between gap-3">
         <div>
@@ -70,44 +73,22 @@ export function Card(props: {
             {props.title}
           </h2>
         </div>
-        <div className="flex shrink-0 items-center gap-2">
-          {props.badge}
-          {props.onShare && !props.locked && (
-            <button
-              type="button"
-              className="export-hide rounded-full bg-white/60 px-3 py-1.5 text-sm font-bold hover:bg-white"
-              onClick={(e) => props.onShare!((e.currentTarget.closest('[data-card]') as HTMLElement)!)}
-              aria-label={`Compartir tarjeta: ${props.kicker}`}
-            >
-              ↗︎ Compartir
-            </button>
-          )}
-        </div>
-      </header>
-
-      <div
-        className={props.locked ? 'pointer-events-none select-none blur-[9px] saturate-50' : ''}
-        aria-hidden={props.locked || undefined}
-        // `inert` evita que el contenido bloqueado reciba foco con el teclado.
-        {...(props.locked ? { inert: true } : {})}
-      >
-        {props.children}
-        {props.footnote && <div className="mt-5 text-sm leading-snug opacity-70">{props.footnote}</div>}
-      </div>
-
-      {props.locked && (
-        <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-white/10 p-6 text-center">
-          <span className="text-4xl" aria-hidden>🔒</span>
-          <p className="max-w-[16rem] text-lg font-extrabold leading-tight">Desbloquea el informe completo para ver esta tarjeta</p>
+        {props.onShare && (
           <button
             type="button"
-            onClick={props.onUnlock}
-            className="rounded-full bg-ink px-5 py-3 text-base font-bold text-white shadow-lg transition hover:scale-[1.03] active:scale-95"
+            className="export-hide press shrink-0 rounded-full bg-white/60 px-3 py-1.5 text-sm font-bold hover:bg-white"
+            onClick={(e) => props.onShare!((e.currentTarget.closest('[data-card]') as HTMLElement)!)}
+            aria-label={`Compartir tarjeta: ${props.kicker}`}
           >
-            Desbloquear
+            ↗︎ Compartir
           </button>
-        </div>
-      )}
+        )}
+      </header>
+
+      {props.caption && <p className="bubble-in mb-5">{fill(props.caption)}</p>}
+
+      {props.children}
+      {props.footnote && <div className="mt-5 text-sm leading-snug opacity-70">{props.footnote}</div>}
 
       <div className="export-only mt-6 items-center justify-between text-xs font-bold opacity-60">
         <span>longsaw · analizado en el navegador</span>
@@ -119,23 +100,59 @@ export function Card(props: {
 
 /* ------------------------------ Números ------------------------------ */
 
-/** Cuenta hacia arriba al aparecer (respeta reduced-motion). */
+/** Evento global: los contadores saltan a su valor final (antes de exportar). */
+export const FINISH_ANIMATIONS = 'longsaw:finish-animations';
+
+const reducedMotion = () => typeof window !== 'undefined' && !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+
+/** Cuenta hacia arriba cuando el número entra en pantalla (respeta reduced-motion). */
 export function CountUp({ value, format = (n: number) => n.toLocaleString('es-ES') }: { value: number; format?: (n: number) => string }) {
-  const [shown, setShown] = useState(value);
+  const [shown, setShown] = useState(() => (reducedMotion() || value < 10 ? value : 0));
+  const ref = useRef<HTMLSpanElement>(null);
   useEffect(() => {
-    if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches || value < 10) return setShown(value);
+    if (reducedMotion() || value < 10) return setShown(value);
+    const el = ref.current;
     let raf = 0;
-    const t0 = performance.now();
-    const dur = 900;
-    const tick = (t: number) => {
-      const p = Math.min(1, (t - t0) / dur);
-      setShown(Math.round(value * (1 - Math.pow(1 - p, 3))));
-      if (p < 1) raf = requestAnimationFrame(tick);
+    // Al exportar (imagen/PDF) todo debe salir con su valor final, se haya visto o no.
+    const finish = () => {
+      cancelAnimationFrame(raf);
+      setShown(value);
     };
-    raf = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(raf);
+    addEventListener(FINISH_ANIMATIONS, finish);
+    const run = () => {
+      const t0 = performance.now();
+      const dur = 1100;
+      const tick = (t: number) => {
+        const p = Math.min(1, (t - t0) / dur);
+        setShown(Math.round(value * (1 - Math.pow(1 - p, 3))));
+        if (p < 1) raf = requestAnimationFrame(tick);
+      };
+      raf = requestAnimationFrame(tick);
+    };
+    if (!el || !('IntersectionObserver' in window)) {
+      run();
+      return () => {
+        removeEventListener(FINISH_ANIMATIONS, finish);
+        cancelAnimationFrame(raf);
+      };
+    }
+    const io = new IntersectionObserver(
+      ([e]) => {
+        if (e.isIntersecting) {
+          io.disconnect();
+          run();
+        }
+      },
+      { threshold: 0.4 },
+    );
+    io.observe(el);
+    return () => {
+      removeEventListener(FINISH_ANIMATIONS, finish);
+      io.disconnect();
+      cancelAnimationFrame(raf);
+    };
   }, [value]);
-  return <>{format(shown)}</>;
+  return <span ref={ref}>{format(shown)}</span>;
 }
 
 export function BigStat(props: { label: ReactNode; value: ReactNode; unit?: string; sub?: ReactNode; color?: string }) {
@@ -184,7 +201,7 @@ export function Quote({ e, maxLines, compact }: { e: Excerpt; maxLines?: number;
     <figure className={`flex flex-col ${mine ? 'items-end' : 'items-start'}`}>
       <blockquote
         className={`max-w-[90%] whitespace-pre-line rounded-3xl px-4 py-3 font-semibold leading-snug shadow-sm ${
-          mine ? 'rounded-br-md bg-ink text-white' : 'rounded-bl-md bg-white'
+          mine ? 'rounded-br-md bg-wa-bubble' : 'rounded-bl-md bg-white'
         } ${compact ? 'text-sm' : 'text-base'}`}
         style={maxLines ? { display: '-webkit-box', WebkitLineClamp: maxLines, WebkitBoxOrient: 'vertical', overflow: 'hidden' } : undefined}
       >

@@ -7,11 +7,9 @@
  */
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { AnalysisOptions, Report } from './core/types';
-import type { AiResult } from './core/anonymize';
 import { generateDemoChat } from './core/demo';
 import { AnalysisWorker, type ChatSummary, type ProgressStep } from './lib/workerClient';
 import { loadSaved, saveReport, wipeStorage, type Saved } from './lib/storage';
-import { requestUnlock, PRICE_LABEL } from './lib/entitlements';
 import { UploadPage } from './pages/UploadPage';
 import { SetupPage } from './pages/SetupPage';
 import { LoadingPage } from './pages/LoadingPage';
@@ -40,9 +38,6 @@ export default function App() {
   const [route, setRoute] = useState(location.hash);
   const [stage, setStage] = useState<Stage>({ name: 'upload' });
   const [error, setError] = useState<string | null>(null);
-  const [ai, setAi] = useState<AiResult | null>(null);
-  const [unlocked, setUnlocked] = useState(false);
-  const [paywallMsg, setPaywallMsg] = useState(false);
   const [saved, setSaved] = useState<Saved | null>(() => loadSaved());
   const worker = useRef<AnalysisWorker | null>(null);
 
@@ -65,8 +60,6 @@ export default function App() {
 
   const onFile = async (buf: ArrayBuffer) => {
     setError(null);
-    setAi(null);
-    setUnlocked(false);
     const t0 = performance.now();
     setStage({ name: 'loading', step: 0, pct: 2 });
     try {
@@ -102,19 +95,12 @@ export default function App() {
     onFile(bytes.buffer as ArrayBuffer);
   };
 
-  const onUnlock = async () => {
-    if (await requestUnlock()) setUnlocked(true);
-    else setPaywallMsg(true);
-  };
-
   /** "Borrar todo": worker (chat en memoria), estado de React y almacenamiento. */
   const wipe = useCallback(() => {
     worker.current?.destroy();
     worker.current = null;
     wipeStorage();
     setSaved(null);
-    setAi(null);
-    setUnlocked(false);
     setError(null);
     setStage({ name: 'upload' });
     scrollTo(0, 0);
@@ -123,7 +109,8 @@ export default function App() {
   if (route === '#/privacidad') return <PrivacyPage onBack={() => (location.hash = '')} />;
 
   return (
-    <>
+    // La clave cambia con la pantalla: React la remonta y la animación de entrada se repite.
+    <div key={stage.name} className="animate-stage">
       {stage.name === 'upload' && (
         <UploadPage
           onFile={onFile}
@@ -132,8 +119,6 @@ export default function App() {
           saved={saved}
           onOpenSaved={() => {
             if (!saved) return;
-            setAi(saved.ai);
-            setUnlocked(saved.unlocked);
             setStage({ name: 'report', report: saved.report, options: saved.options });
           }}
         />
@@ -144,29 +129,15 @@ export default function App() {
         <ReportPage
           report={stage.report}
           options={stage.options}
-          ai={ai}
-          setAi={setAi}
-          unlocked={unlocked}
-          onUnlock={onUnlock}
           onWipe={wipe}
           onNew={() => setStage({ name: 'upload' })}
           onSave={() => {
-            const ok = saveReport({ report: stage.report, options: stage.options, ai, unlocked });
+            const ok = saveReport({ report: stage.report, options: stage.options });
             if (ok) setSaved(loadSaved());
             return ok;
           }}
         />
       )}
-      {paywallMsg && (
-        <div className="fixed inset-0 z-50 grid place-items-center bg-ink/50 p-6" role="dialog" aria-modal="true" onClick={() => setPaywallMsg(false)}>
-          <div className="max-w-sm rounded-[2rem] bg-paper p-7 text-center" onClick={(e) => e.stopPropagation()}>
-            <p className="text-4xl">🔓</p>
-            <p className="mt-2 text-2xl font-extrabold">Pago único de {PRICE_LABEL}</p>
-            <p className="mt-2 font-semibold">Los pagos llegan muy pronto. Esta versión es una demo del modelo freemium.</p>
-            <button type="button" className="mt-5 rounded-full bg-ink px-6 py-3 font-extrabold text-white" onClick={() => setPaywallMsg(false)}>Vale</button>
-          </div>
-        </div>
-      )}
-    </>
+    </div>
   );
 }

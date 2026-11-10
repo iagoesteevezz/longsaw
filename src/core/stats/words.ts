@@ -7,11 +7,13 @@
  * se llena de conectores.
  */
 import { ALL_LOCALES } from '../locales';
+import { MARKER_WORDS, stripMediaMarkers } from '../media';
 import type { Pair, Report } from '../types';
 import type { Ctx } from './context';
 import { extractEmojis, pair, tokenize, topN } from './util';
 
-const STOP = new Set(ALL_LOCALES.flatMap((l) => [...l.stopwords]));
+// Las palabras de los marcadores de multimedia ("omitido", "multimedia"…) cuentan como vacías.
+const STOP = new Set([...ALL_LOCALES.flatMap((l) => [...l.stopwords]), ...MARKER_WORDS]);
 const LAUGHS = new Set(['jaja', 'haha', 'jsjs', 'xd']);
 
 const isContent = (w: string) => w.length >= 3 && !STOP.has(w);
@@ -25,7 +27,8 @@ export function words(ctx: Ctx): Report['words'] {
   for (const m of ctx.msgs) {
     if (m.kind !== 'text') continue;
     const a = m.author!;
-    const toks = tokenize(m.text);
+    // Red de seguridad: un marcador incrustado en un texto no debe puntuar como palabra.
+    const toks = tokenize(stripMediaMarkers(m.text));
     for (let i = 0; i < toks.length; i++) {
       const w = toks[i];
       if (isContent(w) || LAUGHS.has(w)) inc(uni[a], w);

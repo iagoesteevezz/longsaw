@@ -198,9 +198,42 @@ export interface AmbiguousMessage {
   /** Mensaje previo de la otra persona (contexto). */
   context: Excerpt | null;
   pattern: string;
-  /** Lectura por reglas (la IA puede reemplazarla). */
+  /** Lectura por reglas. */
   reading: string;
 }
+
+/** Multimedia enviada, por tipo (ver core/media.ts → mediaGroup). */
+export interface MediaBreakdown {
+  photo: number;
+  audio: number;
+  video: number;
+  sticker: number;
+  /** Documentos, contactos y ubicaciones. */
+  other: number;
+  /** "<Multimedia omitido>" de Android: el export no dice qué era. */
+  unknown: number;
+}
+
+/** Huecos con frase generada (tarjetas y sub-apartados). */
+export type CaptionKey =
+  | 'messages'
+  | 'response'
+  | 'first'
+  | 'initiator'
+  | 'media'
+  | 'longest'
+  | 'deleted'
+  | 'timeline'
+  | 'interest'
+  | 'seen'
+  | 'silence'
+  | 'words'
+  | 'shared'
+  | 'flags'
+  | 'laughs'
+  | 'affection'
+  | 'insults'
+  | 'greetings';
 
 export interface Report {
   meta: {
@@ -219,6 +252,22 @@ export interface Report {
     media: Pair<number>;
     calls: Pair<number>;
     edited: Pair<number>;
+    /** Mensajes de texto con pregunta. */
+    questions: Pair<number>;
+  };
+  media: Pair<MediaBreakdown>;
+  lexicon: {
+    laughs: Pair<number>;
+    /** Familia de risa favorita: 'jaja', 'jsjs', 'xd', '😂'… */
+    laughStyle: Pair<string | null>;
+    longestLaugh: Pair<string | null>;
+    affection: Pair<number>;
+    topAffection: Pair<WordCount[]>;
+    insults: Pair<number>;
+    topInsults: Pair<WordCount[]>;
+    greetings: Pair<number>;
+    goodMorning: Pair<number>;
+    goodNight: Pair<number>;
   };
   responses: Pair<ResponseStats>;
   firstMessage: Excerpt | null;
@@ -226,6 +275,8 @@ export interface Report {
   /** Quién cierra las conversaciones (último mensaje antes del silencio). */
   endings: Pair<number>;
   longest: Pair<Excerpt | null>;
+  /** Palabras del mensaje más largo (la cita va recortada, este número no). */
+  longestWords: Pair<number>;
   deleted: Pair<number>;
   interest: InterestResult;
   seen: { counts: Pair<number>; worst: Pair<SeenEvent | null>; examples: SeenEvent[] };
@@ -243,10 +294,11 @@ export interface Report {
   };
   flags: Flag[];
   ambiguous: AmbiguousMessage[];
-  /** Texto por reglas para las tarjetas "interpretativas" (sin IA). */
+  /** Textos por reglas y plantillas (core/phrases). Usan {0}/{1} en vez de nombres. */
   insights: {
     styles: Pair<{ label: string; emoji: string; traits: string[] }>;
     noticed: string[];
     move: { title: string; steps: string[] };
+    captions: Partial<Record<CaptionKey, string>>;
   };
 }

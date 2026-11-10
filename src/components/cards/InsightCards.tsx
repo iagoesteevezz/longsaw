@@ -4,6 +4,7 @@
  */
 import type { AuthorIndex, Report } from '../../core/types';
 import { useNames } from '../../lib/names';
+import { useT } from '../../lib/i18n';
 import { Quote, usePersonColor } from '../ui';
 
 interface P {
@@ -11,6 +12,7 @@ interface P {
 }
 
 export function StyleBody({ r }: P) {
+  const t = useT().style;
   const { names, me, fill } = useNames();
   const color = usePersonColor();
   const order: AuthorIndex[] = me === 0 ? [0, 1] : [1, 0];
@@ -33,7 +35,7 @@ export function StyleBody({ r }: P) {
       </div>
       {r.insights.noticed.length > 0 && (
         <>
-          <h3 className="mt-6 mb-2 text-lg font-extrabold">Lo que notamos</h3>
+          <h3 className="mt-6 mb-2 text-lg font-extrabold">{t.noticed}</h3>
           <ul className="space-y-2">
             {r.insights.noticed.map((n) => (
               <li key={n} className="tile-hover rounded-2xl bg-surface/50 px-4 py-2 font-semibold">{fill(n)}</li>
@@ -41,15 +43,14 @@ export function StyleBody({ r }: P) {
           </ul>
         </>
       )}
-      <p className="mt-5 text-sm font-semibold opacity-70">
-        Esto es entretenimiento, no psicología clínica. Un chat es una parte pequeña de una relación y nadie “es” un estilo de apego por cómo escribe en WhatsApp.
-      </p>
+      <p className="mt-5 text-sm font-semibold opacity-70">{t.disclaimer}</p>
     </>
   );
 }
 
 export function MeaningBody({ r }: P) {
-  if (r.ambiguous.length === 0) return <p className="text-xl font-extrabold">No hemos encontrado mensajes ambiguos clave. Os entendéis bastante bien.</p>;
+  const t = useT().meaning;
+  if (r.ambiguous.length === 0) return <p className="text-xl font-extrabold">{t.none}</p>;
   return (
     <div className="space-y-6">
       {r.ambiguous.map((a) => (
@@ -62,7 +63,7 @@ export function MeaningBody({ r }: P) {
           </div>
         </div>
       ))}
-      <p className="text-sm font-semibold opacity-70">Interpretaciones posibles, no certezas. Si de verdad importa, pregunta.</p>
+      <p className="text-sm font-semibold opacity-70">{t.disclaimer}</p>
     </div>
   );
 }

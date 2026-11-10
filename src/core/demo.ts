@@ -21,32 +21,63 @@ function mulberry32(seed: number) {
 const A = 'Alex';
 const B = 'Sam 🌙';
 
-const A_LINES = [
+const ES = {
+  system: 'Los mensajes y las llamadas están cifrados de extremo a extremo. Nadie fuera de este chat, ni siquiera WhatsApp, puede leerlos ni escucharlos.',
+  deletedMine: 'Eliminaste este mensaje',
+  deletedOther: 'Se eliminó este mensaje',
+  media: '<Multimedia omitido>',
+  ending: ['¿Todo bien? Te noto rara', 'Bueno, cuando puedas me dices algo', '¿Sigues ahí?', 'Vale, entiendo 🙂'],
+  a: [
   '¿Qué tal tu día?', 'jajaja no puedo contigo', 'Oye, ¿te apetece ir al concierto del viernes?', 'buenas noches 🌙',
   'Hoy me he acordado de ti en el metro jaja', '¿Has visto lo que ha pasado con la serie?', 'te echo de menos 🥺',
   'Mañana tengo examen, deséame suerte', 'qué guay!! 😍', '¿Cuándo nos vemos?', 'jajaja literal', 'pizza o sushi?',
   'Me encanta hablar contigo, de verdad, se me pasan las horas volando y no me doy ni cuenta', 'ya estoy en casa',
   '¿Sigues despierta?', 'buenos días ☀️', 'jajaja eres lo peor', '¿Todo bien? Te noto rara', 'te echo de menos',
-];
-const B_EARLY = [
+  ],
+  bEarly: [
   'Bien!! Ha sido un día largo pero bonito, ¿y el tuyo qué tal?', 'jajaja 😂😂', 'Sii me apetece muchísimo, ¿a qué hora?',
   'buenas noches 🌙 que descanses', 'Jajaja qué mona', 'Nooo todavía no, no me hagas spoiler!!', 'yo también te echo de menos',
   'Mucha suerte!! Seguro que lo bordas 💪', 'pizza siempre', '¿El sábado te viene bien?', 'jajaja literal', 'buenos días ☀️',
   'Me pasa igual, es muy fácil hablar contigo', 'Acabo de salir del gym, estoy muerta jaja', '¿Y tú qué haces?',
-];
-const B_LATE = ['vale', 'jaja', 'ok', 'estoy liada', 'luego hablamos', 'como quieras', 'ya veremos', 'bien', 'sí', 'ya', 'buenas noches'];
+  ],
+  bLate: ['vale', 'jaja', 'ok', 'estoy liada', 'luego hablamos', 'como quieras', 'ya veremos', 'bien', 'sí', 'ya', 'buenas noches'],
+};
+
+const EN: typeof ES = {
+  system: 'Messages and calls are end-to-end encrypted. No one outside of this chat, not even WhatsApp, can read or listen to them.',
+  deletedMine: 'You deleted this message',
+  deletedOther: 'This message was deleted',
+  media: '<Media omitted>',
+  ending: ['All good? You seem a bit off', 'Anyway, let me know when you can', 'Are you still there?', 'Ok, I get it 🙂'],
+  a: [
+    'How was your day?', 'hahaha I can’t with you', 'Hey, fancy going to the gig on Friday?', 'good night 🌙',
+    'Thought of you on the train today haha', 'Did you see what happened in the show?', 'miss you 🥺',
+    'Got an exam tomorrow, wish me luck', 'so cool!! 😍', 'When are we meeting up?', 'hahaha literally', 'pizza or sushi?',
+    'I love talking to you, honestly, the hours fly by and I don’t even notice', 'home now',
+    'Still awake?', 'good morning ☀️', 'hahaha you’re the worst', 'All good? You seem a bit off', 'miss you',
+  ],
+  bEarly: [
+    'Good!! Long day but a nice one, how was yours?', 'hahaha 😂😂', 'Yesss I’d love to, what time?',
+    'good night 🌙 sleep well', 'Hahaha that’s cute', 'Nooo not yet, no spoilers!!', 'miss you too',
+    'Good luck!! You’ll smash it 💪', 'pizza always', 'Does Saturday work for you?', 'hahaha literally', 'good morning ☀️',
+    'Same here, you’re so easy to talk to', 'Just left the gym, I’m dead haha', 'What are you up to?',
+  ],
+  bLate: ['ok', 'haha', 'k', 'I’m busy', 'talk later', 'whatever', 'we’ll see', 'fine', 'yes', 'sure', 'good night'],
+};
 
 function fmt(d: Date) {
   const p = (n: number) => String(n).padStart(2, '0');
   return `${p(d.getDate())}/${p(d.getMonth() + 1)}/${d.getFullYear()}, ${p(d.getHours())}:${p(d.getMinutes())}`;
 }
 
-export function generateDemoChat(seed = 42): string {
+/** `lang` elige el idioma del chat inventado (el de la interfaz al pulsar "Probar con un chat de ejemplo"). */
+export function generateDemoChat(seed = 42, lang: 'es' | 'en' = 'es'): string {
+  const L = lang === 'en' ? EN : ES;
   const rnd = mulberry32(seed);
   const pick = <T,>(xs: T[]) => xs[Math.floor(rnd() * xs.length)];
   const lines: string[] = [];
   const start = new Date(2024, 0, 8, 19, 30);
-  lines.push(`${fmt(start)} - Los mensajes y las llamadas están cifrados de extremo a extremo. Nadie fuera de este chat, ni siquiera WhatsApp, puede leerlos ni escucharlos.`);
+  lines.push(`${fmt(start)} - ${L.system}`);
   let t = start.getTime() + 60_000;
   const add = (who: string, text: string) => lines.push(`${fmt(new Date(t))} - ${who}: ${text}`);
   const totalDays = 150;
@@ -65,20 +96,20 @@ export function generateDemoChat(seed = 42): string {
       let who = initiator;
       for (let k = 0; k < turns; k++) {
         if (who === A) {
-          if (rnd() < 0.03) add(A, 'Eliminaste este mensaje');
-          else if (rnd() < 0.05) add(A, '<Multimedia omitido>');
-          else add(A, pick(A_LINES));
+          if (rnd() < 0.03) add(A, L.deletedMine);
+          else if (rnd() < 0.05) add(A, L.media);
+          else add(A, pick(L.a));
           if (rnd() < 0.25 + phase * 0.3) {
             t += 60_000 * (1 + rnd() * 20);
-            add(A, pick(A_LINES)); // doble mensaje
+            add(A, pick(L.a)); // doble mensaje
           }
           // Sam tarda más con el tiempo
           t += 60_000 * (0.5 + rnd() * (2 + phase * phase * 600));
           who = B;
         } else {
-          if (rnd() < 0.02) add(B, 'Se eliminó este mensaje');
-          else if (rnd() < 0.06) add(B, '<Multimedia omitido>');
-          else add(B, rnd() < phase * 0.9 ? pick(B_LATE) : pick(B_EARLY));
+          if (rnd() < 0.02) add(B, L.deletedOther);
+          else if (rnd() < 0.06) add(B, L.media);
+          else add(B, rnd() < phase * 0.9 ? pick(L.bLate) : pick(L.bEarly));
           t += 60_000 * (0.3 + rnd() * 3);
           who = A;
         }
@@ -87,12 +118,12 @@ export function generateDemoChat(seed = 42): string {
   }
   // Final: Alex escribe durante 12 días sin respuesta.
   t += 86_400_000;
-  add(A, '¿Todo bien? Te noto rara');
+  add(A, L.ending[0]);
   t += 2 * 86_400_000;
-  add(A, 'Bueno, cuando puedas me dices algo');
+  add(A, L.ending[1]);
   t += 4 * 86_400_000;
-  add(A, '¿Sigues ahí?');
+  add(A, L.ending[2]);
   t += 6 * 86_400_000;
-  add(A, 'Vale, entiendo 🙂');
+  add(A, L.ending[3]);
   return lines.join('\n') + '\n';
 }

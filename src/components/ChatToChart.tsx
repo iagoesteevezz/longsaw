@@ -9,21 +9,22 @@
  * Es decorativa: aria-hidden, y el texto de la portada dice lo mismo.
  */
 import { useEffect, useRef, useState } from 'react';
+import { useT } from '../lib/i18n';
 
 interface Line {
   who: 'me' | 'them';
-  text: string;
   time: string;
   floats?: string[];
 }
 
+/** El texto de cada mensaje está en el diccionario (t.hero.script), en el mismo orden. */
 const SCRIPT: Line[] = [
-  { who: 'them', text: '¿al final vienes esta noche? 👀', time: '21:02' },
-  { who: 'me', text: '¡claro! llevo todo el día pensando en ello', time: '21:02' },
-  { who: 'me', text: '¿a qué hora quedamos?', time: '21:03' },
-  { who: 'them', text: 'jajaja a las 9, no llegues tarde 😂', time: '21:09', floats: ['😂', '😂', '🤣'] },
-  { who: 'me', text: 'yo nunca llego tarde', time: '21:09' },
-  { who: 'them', text: 'ya, ya… te veo luego ❤️', time: '21:15', floats: ['❤️', '💚', '❤️'] },
+  { who: 'them', time: '21:02' },
+  { who: 'me', time: '21:02' },
+  { who: 'me', time: '21:03' },
+  { who: 'them', time: '21:09', floats: ['😂', '😂', '🤣'] },
+  { who: 'me', time: '21:09' },
+  { who: 'them', time: '21:15', floats: ['❤️', '💚', '❤️'] },
 ];
 
 interface State {
@@ -72,6 +73,7 @@ export function Ticks({ read }: { read: boolean }) {
 }
 
 export function ChatToChart() {
+  const h = useT().hero;
   const reduced = typeof window !== 'undefined' && !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
   const [s, setS] = useState<State>(reduced ? FINAL : START);
   const [running, setRunning] = useState(false);
@@ -115,14 +117,14 @@ export function ChatToChart() {
           <span className="grid h-8 w-8 place-items-center rounded-full bg-[#dfe5e7] dark:bg-[#2a3942] text-sm font-extrabold text-wa-dark dark:text-wa-green">S</span>
           <span className="min-w-0 leading-tight">
             <span className="block text-sm font-bold">Sam</span>
-            <span className="block text-[0.68rem] text-white/75">{s.typing ? 'escribiendo…' : 'en línea'}</span>
+            <span className="block text-[0.68rem] text-white/75">{s.typing ? h.typing : h.online}</span>
           </span>
         </div>
 
         <div className={`chat-scroll ${s.phase !== 'chat' ? 'morph' : ''} ${open ? 'lifted' : ''}`}>
           {SCRIPT.slice(0, s.shown).map((m, i) => (
             <div key={`${cycle}-${i}`} className={`msg ${m.who}`}>
-              <span className="body block">{m.text}</span>
+              <span className="body block">{h.script[i]}</span>
               <span className="meta">
                 {m.time}
                 {m.who === 'me' && <Ticks read={s.read > i} />}
@@ -149,22 +151,18 @@ export function ChatToChart() {
         </div>
 
         <div className={`report-sheet ${open ? 'open' : ''}`}>
-          <p className="text-[0.7rem] font-bold text-wa-teal">Tu informe</p>
-          <p className="mt-0.5 text-lg font-extrabold leading-tight text-ink">Escribís lo mismo, pero Sam se ríe más</p>
+          <p className="text-[0.7rem] font-bold text-wa-teal">{h.yourReport}</p>
+          <p className="mt-0.5 text-lg font-extrabold leading-tight text-ink">{h.headline}</p>
           <div className="split mt-3 flex h-2.5 overflow-hidden rounded-full bg-ink/10">
             <span className="bg-wa-dark" style={{ width: open ? `${(mine / SCRIPT.length) * 100}%` : '0%' }} />
             <span className="bg-accent" style={{ width: open ? `${100 - (mine / SCRIPT.length) * 100}%` : '0%' }} />
           </div>
           <div className="mt-1 flex justify-between text-[0.65rem] font-bold text-ink/70">
-            <span>Tú · 50 %</span>
-            <span>50 % · Sam</span>
+            <span>{h.you} · {h.pct(50)}</span>
+            <span>{h.pct(50)} · Sam</span>
           </div>
           <div className="mt-3 grid grid-cols-3 gap-2 text-ink">
-            {[
-              ['2 min', 'respondes'],
-              ['6 min', 'responde Sam'],
-              ['3 😂', 'risas'],
-            ].map(([v, k]) => (
+            {h.stats.map(([v, k]) => (
               <div key={k} className="rounded-xl bg-wa-cream px-2 py-1.5">
                 <p className="num text-base">{v}</p>
                 <p className="mt-0.5 text-[0.6rem] font-bold leading-tight text-ink/70">{k}</p>
@@ -176,7 +174,7 @@ export function ChatToChart() {
               <i key={i} style={{ height: `${h}%`, transitionDelay: `${200 + i * 60}ms` }} />
             ))}
           </div>
-          <p className="mt-1 text-[0.6rem] font-bold text-ink/60">mensajes por hora</p>
+          <p className="mt-1 text-[0.6rem] font-bold text-ink/60">{h.perHour}</p>
         </div>
       </div>
     </div>

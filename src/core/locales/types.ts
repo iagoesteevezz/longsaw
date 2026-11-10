@@ -31,5 +31,5 @@ export interface LocalePack {
    * Respuestas típicamente ambiguas → lectura "por reglas".
    * `re` se prueba contra el mensaje completo normalizado (minúsculas).
    */
-  ambiguous: { re: RegExp; pattern: string; reading: string }[];
+  ambiguous: { re: RegExp; pattern: string; reading: string; en: { pattern: string; reading: string } }[];
 }

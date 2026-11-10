@@ -5,7 +5,8 @@
  */
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import type { AuthorIndex, Excerpt, Pair } from '../core/types';
-import { formatDateTime } from '../core/format';
+import { formatDateTime, nf } from '../core/format';
+import { useT } from '../lib/i18n';
 import { useNames } from '../lib/names';
 import { LogoMark } from './Logo';
 
@@ -62,6 +63,7 @@ export function Card(props: {
 }) {
   const ref = useReveal<HTMLElement>();
   const { fill } = useNames();
+  const tc = useT().card;
   return (
     <section
       ref={ref}
@@ -82,9 +84,9 @@ export function Card(props: {
             type="button"
             className="export-hide press shrink-0 rounded-full bg-surface/60 px-3 py-1.5 text-sm font-bold hover:bg-surface"
             onClick={(e) => props.onShare!((e.currentTarget.closest('[data-card]') as HTMLElement)!)}
-            aria-label={`Compartir tarjeta: ${props.kicker}`}
+            aria-label={tc.shareAria(props.kicker)}
           >
-            ↗︎ Compartir
+            {tc.share}
           </button>
         )}
       </header>
@@ -99,7 +101,7 @@ export function Card(props: {
           <LogoMark className="h-5 w-5" />
           <span className="font-brand text-sm font-semibold">longsaw</span>
         </span>
-        <span>analizado en el navegador</span>
+        <span>{tc.watermark}</span>
       </div>
     </section>
   );
@@ -113,7 +115,7 @@ export const FINISH_ANIMATIONS = 'longsaw:finish-animations';
 const reducedMotion = () => typeof window !== 'undefined' && !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
 
 /** Cuenta hacia arriba cuando el número entra en pantalla (respeta reduced-motion). */
-export function CountUp({ value, format = (n: number) => n.toLocaleString('es-ES') }: { value: number; format?: (n: number) => string }) {
+export function CountUp({ value, format = (n: number) => nf.format(n) }: { value: number; format?: (n: number) => string }) {
   const [shown, setShown] = useState(() => (reducedMotion() || value < 10 ? value : 0));
   const ref = useRef<HTMLSpanElement>(null);
   useEffect(() => {
@@ -178,6 +180,7 @@ export function BigStat(props: { label: ReactNode; value: ReactNode; unit?: stri
 /** Barra comparativa 0 vs 1 con el % de cada uno. */
 export function VersusBar({ values, label }: { values: Pair<number>; label?: string }) {
   const { names } = useNames();
+  const pct = useT().common.pct;
   const color = usePersonColor();
   const total = values[0] + values[1] || 1;
   const pct0 = Math.round((values[0] / total) * 100);
@@ -186,14 +189,14 @@ export function VersusBar({ values, label }: { values: Pair<number>; label?: str
       <div
         className="flex h-5 w-full overflow-hidden rounded-full bg-surface/50"
         role="img"
-        aria-label={`${label ?? ''} ${names[0]} ${pct0} %, ${names[1]} ${100 - pct0} %`}
+        aria-label={`${label ?? ''} ${names[0]} ${pct(pct0)}, ${names[1]} ${pct(100 - pct0)}`}
       >
         <div style={{ width: `${pct0}%`, background: color(0) }} className="transition-[width] duration-700" />
         <div style={{ width: `${100 - pct0}%`, background: color(1) }} className="transition-[width] duration-700" />
       </div>
       <div className="mt-1.5 flex justify-between text-sm font-bold">
-        <span>{names[0]} · {pct0} %</span>
-        <span>{100 - pct0} % · {names[1]}</span>
+        <span>{names[0]} · {pct(pct0)}</span>
+        <span>{pct(100 - pct0)} · {names[1]}</span>
       </div>
     </div>
   );
@@ -229,11 +232,12 @@ export function Pill({ children, tone = 'white' }: { children: ReactNode; tone?:
   );
 }
 
-export function Explain({ children, summary = '¿Cómo se calcula?' }: { children: ReactNode; summary?: string }) {
+export function Explain({ children, summary }: { children: ReactNode; summary?: string }) {
+  const fallback = useT().card.explain;
   return (
     <details className="group mt-5 rounded-2xl bg-surface/50 px-4 py-3 text-sm">
       <summary className="cursor-pointer list-none font-bold">
-        <span className="mr-1 inline-block transition group-open:rotate-90">›</span> {summary}
+        <span className="mr-1 inline-block transition group-open:rotate-90">›</span> {summary ?? fallback}
       </summary>
       <div className="mt-2 space-y-2 leading-snug">{children}</div>
     </details>

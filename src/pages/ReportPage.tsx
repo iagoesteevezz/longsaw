@@ -13,8 +13,10 @@ import type { AnalysisOptions, CaptionKey, Report } from '../core/types';
 import { NamesProvider, displayNames, fillNames } from '../lib/names';
 import { Wordmark } from '../components/Logo';
 import { ThemeToggle } from '../components/ThemeToggle';
+import { LangToggle } from '../components/LangToggle';
+import { useI18n } from '../lib/i18n';
 import { applyTheme, currentTheme } from '../lib/theme';
-import { CARD_COLOR, CARD_ORDER, RELATIONS, cardCopy, isCardVisible, type CardId } from '../lib/relations';
+import { CARD_COLOR, CARD_ORDER, RELATIONS, isCardVisible, type CardId } from '../lib/relations';
 import { exportPdf, nodeToPng, shareOrDownload } from '../lib/exporters';
 import { Card, CountUp, FINISH_ANIMATIONS, useReveal } from '../components/ui';
 import { DeletedBody, FirstBody, InitiatorBody, LongestBody, MessagesBody, ResponseBody, TimelineBody } from '../components/cards/BasicCards';
@@ -29,8 +31,14 @@ export function ReportPage(props: {
   onSave: () => boolean;
   onWipe: () => void;
   onNew: () => void;
+  /** Se está regenerando en otro idioma. */
+  translating: boolean;
+  /** El chat sigue cargado: se puede regenerar al cambiar de idioma. */
+  canTranslate: boolean;
 }) {
   const { report: r, options: o } = props;
+  const { lang, t } = useI18n();
+  const rt = t.report;
   const [hidden, setHidden] = useState(false);
   const [showNamesOnShare, setShowNamesOnShare] = useState(false);
   const [busy, setBusy] = useState<string | null>(null);
@@ -60,9 +68,9 @@ export function ReportPage(props: {
 
   const shareCard = (el: HTMLElement) =>
     withExportMode(async () => {
-      setBusy('Creando imagen…');
+      setBusy(rt.creatingImage);
       try {
-        await shareOrDownload(await nodeToPng(el), `longsaw-${el.dataset.card}.png`);
+        await shareOrDownload(await nodeToPng(el), `longsaw-${el.dataset.card}.png`, t.pdf.shareTitle);
       } finally {
         setBusy(null);
       }
@@ -70,22 +78,23 @@ export function ReportPage(props: {
 
   const downloadPdf = () =>
     withExportMode(async () => {
-      setBusy('Generando PDF…');
+      setBusy(rt.generatingPdf);
       try {
         const names = displayNames(r.meta.participants, o.me, o.otherAlias, !showNamesOnShare, o.myAlias);
         const fill = (s: string) => fillNames(s, names);
         const nodes = [...(list.current?.querySelectorAll<HTMLElement>('[data-card]') ?? [])];
         await exportPdf(nodes, {
-          title: `${names[o.me]} y ${names[o.me === 0 ? 1 : 0]}`,
-          subtitle: `${relation.label} · ${formatDate(r.meta.firstTs)} – ${formatDate(r.meta.lastTs)}`,
+          title: t.pdf.title(names[o.me], names[o.me === 0 ? 1 : 0]),
+          subtitle: `${t.relations[o.relation]} · ${formatDate(r.meta.firstTs)} – ${formatDate(r.meta.lastTs)}`,
           stats: [
-            ['mensajes', nf.format(r.meta.totalMessages)],
-            ['días de chat', nf.format(r.meta.durationDays)],
-            ['conversaciones', nf.format(r.initiations.sessions)],
-            ['días de racha', nf.format(r.timeline.longestStreakDays)],
+            [t.pdf.stats[0], nf.format(r.meta.totalMessages)],
+            [t.pdf.stats[1], nf.format(r.meta.durationDays)],
+            [t.pdf.stats[2], nf.format(r.initiations.sessions)],
+            [t.pdf.stats[3], nf.format(r.timeline.longestStreakDays)],
           ],
-          split: { label: 'Reparto de mensajes', names, values: r.counts.messages },
+          split: { label: t.pdf.split, names, values: r.counts.messages },
           highlights: r.insights.noticed.slice(0, 4).map(fill),
+          labels: { kicker: t.pdf.kicker, noticed: t.pdf.noticed, footer: t.pdf.footer, file: t.pdf.file, pct: t.common.pct },
         });
       } finally {
         setBusy(null);
@@ -115,42 +124,50 @@ export function ReportPage(props: {
     }
   };
 
-  const otherName = hidden ? 'Persona B' : o.otherAlias;
+  const otherName = hidden ? t.common.persons[1] : o.otherAlias;
+  const otherLang = (o.lang ?? 'es') !== lang;
 
   return (
     <NamesProvider realNames={r.meta.participants} me={o.me} alias={o.otherAlias} myAlias={o.myAlias} hidden={hidden}>
       <div className="mx-auto max-w-xl px-4 pb-24">
         {/* Barra superior */}
         <nav className="export-hide sticky top-0 z-30 -mx-4 flex items-center gap-2 overflow-x-auto bg-paper/85 px-4 py-3 backdrop-blur">
-          <button type="button" onClick={props.onNew} className="press shrink-0 text-xl text-wa-dark dark:text-wa-green" aria-label="longsaw: analizar otro chat">
+          <button type="button" onClick={props.onNew} className="press shrink-0 text-xl text-wa-dark dark:text-wa-green" aria-label={rt.newAria}>
             <Wordmark markClassName="h-8 w-8" />
           </button>
           <span className="flex-1" />
+          <LangToggle variant="solid" />
           <ThemeToggle variant="solid" />
           <button type="button" onClick={downloadPdf} className="press shrink-0 rounded-full bg-surface px-4 py-2 text-sm font-bold">⬇︎ PDF</button>
-          <button type="button" onClick={props.onWipe} className="press shrink-0 rounded-full bg-card-red px-4 py-2 text-sm font-bold" aria-label="Borrar todo">🗑️<span className="hidden sm:inline"> Borrar todo</span></button>
+          <button type="button" onClick={props.onWipe} className="press shrink-0 rounded-full bg-card-red px-4 py-2 text-sm font-bold" aria-label={rt.wipe}>🗑️<span className="hidden sm:inline"> {rt.wipe}</span></button>
         </nav>
+
+        {otherLang && (
+          <p role="status" className="export-hide mt-4 rounded-2xl bg-card-yellow px-4 py-3 text-sm font-bold">
+            {props.translating || props.canTranslate ? `⏳ ${rt.translating}` : rt.otherLang}
+          </p>
+        )}
 
         {/* Portada del informe */}
         <header ref={heroRef} className="reveal wa-gradient relative mt-4 overflow-hidden rounded-[2rem] p-7 text-white">
           <span aria-hidden className="pointer-events-none absolute -right-6 -top-8 text-[9rem] leading-none opacity-15">💬</span>
-          <p className="text-sm font-bold uppercase tracking-widest text-white/70">Informe · {relation.emoji} {relation.label}</p>
-          <h1 className="mt-3 text-5xl font-extrabold leading-[0.95]">Tú y {otherName}</h1>
+          <p className="text-sm font-bold uppercase tracking-widest text-white/70">{rt.kicker} · {relation.emoji} {t.relations[o.relation]}</p>
+          <h1 className="mt-3 text-5xl font-extrabold leading-[0.95]">{rt.youAnd(otherName)}</h1>
           <p className="mt-3 font-semibold text-white/80">{formatDate(r.meta.firstTs)} → {formatDate(r.meta.lastTs)}</p>
           <dl className="mt-6 grid grid-cols-3 gap-3">
-            {([['mensajes', r.meta.totalMessages], ['días', r.meta.durationDays], ['charlas', r.initiations.sessions]] as const).map(([k, v]) => (
+            {([[rt.heroStats[0], r.meta.totalMessages], [rt.heroStats[1], r.meta.durationDays], [rt.heroStats[2], r.initiations.sessions]] as const).map(([k, v]) => (
               <div key={k} className="rounded-2xl bg-white/12 px-3 py-3">
                 <dd className="num text-3xl"><CountUp value={v} /></dd>
                 <dt className="mt-1 text-xs font-bold uppercase tracking-wider text-white/70">{k}</dt>
               </div>
             ))}
           </dl>
-          {r.meta.warnings.map((w) => <p key={w} className="mt-3 text-sm font-semibold text-white/80">⚠️ {w}</p>)}
+          {r.meta.warnings.map((w) => <p key={w.code} className="mt-3 text-sm font-semibold text-white/80">⚠️ {t.warning(w)}</p>)}
         </header>
 
         <div ref={list} className="mt-4 flex flex-col gap-4">
           {CARD_ORDER.filter((id) => isCardVisible(id, o.relation)).map((id, i) => {
-            const copy = cardCopy(id, o.relation);
+            const copy = t.cardCopy(id, o.relation);
             return (
               <Card
                 key={id}
@@ -171,18 +188,18 @@ export function ReportPage(props: {
         {/* Ajustes de privacidad del informe */}
         <section className="export-hide mt-6 space-y-3 rounded-[2rem] bg-surface p-6">
           <label className="flex items-center justify-between gap-4 font-bold">
-            <span>Mostrar nombres al compartir o descargar</span>
+            <span>{rt.showNames}</span>
             <input type="checkbox" checked={showNamesOnShare} onChange={(e) => setShowNamesOnShare(e.target.checked)} className="h-6 w-6 accent-wa-dark" />
           </label>
           <label className="flex items-center justify-between gap-4 font-bold">
-            <span>Ocultar nombres también en pantalla</span>
+            <span>{rt.hideNames}</span>
             <input type="checkbox" checked={hidden} onChange={(e) => setHidden(e.target.checked)} className="h-6 w-6 accent-wa-dark" />
           </label>
           <button type="button" onClick={() => setSaved(props.onSave())} className="press w-full rounded-full bg-wa-green px-5 py-3 font-extrabold text-wa-ink">
-            {saved ? '✓ Guardado en este navegador' : 'Guardar informe en este dispositivo'}
+            {saved ? rt.saved : rt.save}
           </button>
-          <p className="text-sm font-semibold opacity-60">Guarda solo el informe (no el chat). “Borrar todo” lo elimina.</p>
-          <a href="#/privacidad" className="block text-sm font-bold underline">Cómo tratamos tus datos</a>
+          <p className="text-sm font-semibold opacity-60">{rt.saveNote}</p>
+          <a href="#/privacidad" className="block text-sm font-bold underline">{t.common.howData}</a>
         </section>
       </div>
 

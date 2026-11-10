@@ -11,6 +11,7 @@ import { ALL_LOCALES } from '../locales';
 import type { AmbiguousMessage } from '../types';
 import type { Ctx } from './context';
 import { excerpt, wordCount } from './util';
+import { coreLang, tr } from '../i18n';
 
 export function ambiguous(ctx: Ctx, limit = 6): AmbiguousMessage[] {
   const packs = [ctx.pack, ...ALL_LOCALES.filter((p) => p !== ctx.pack)];
@@ -36,13 +37,14 @@ export function ambiguous(ctx: Ctx, limit = 6): AmbiguousMessage[] {
     const used = perPattern.get(hit.pattern) ?? 0;
     if (used >= 1) continue; // variedad: un ejemplo por patrón
     perPattern.set(hit.pattern, used + 1);
+    const text = coreLang() === 'en' ? hit.en : hit;
     found.push({
       message: excerpt(m),
       context: prevWords ? excerpt(prev, 260) : null,
-      pattern: hit.pattern,
+      pattern: text.pattern,
       reading: closes
-        ? `${hit.reading} Además, fue lo último que se dijo en esa conversación.`
-        : hit.reading,
+        ? `${text.reading}${tr({ es: ' Además, fue lo último que se dijo en esa conversación.', en: ' Also, it was the last thing said in that conversation.' })}`
+        : text.reading,
       weight: prevWords + (closes ? 15 : 0),
     });
   }

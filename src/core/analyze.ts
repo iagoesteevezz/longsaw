@@ -18,10 +18,13 @@ import { flags } from './stats/flags';
 import { ambiguous } from './stats/ambiguous';
 import { insights } from './stats/insights';
 import { DAY } from './stats/util';
+import { setCoreLang } from './i18n';
 
 export type ProgressFn = (step: 'stats' | 'patterns' | 'report', pct: number) => void;
 
 export function analyze(chat: ParsedChat, opts: AnalysisOptions, onProgress: ProgressFn = () => {}): Report {
+  // Todos los textos del informe (frases, flags, fechas) salen en este idioma.
+  setCoreLang(opts.lang ?? 'es');
   const pack = LOCALES[chat.locale];
   const ctx = buildContext(chat, opts, pack);
   const msgs = ctx.msgs;

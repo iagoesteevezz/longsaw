@@ -5,6 +5,7 @@
 import type { AuthorIndex, Flag, Report } from '../../core/types';
 import { formatDate, formatDuration } from '../../core/format';
 import { useNames } from '../../lib/names';
+import { useT } from '../../lib/i18n';
 import { BigStat, CountUp, Estimate, Explain, Quote, usePersonColor } from '../ui';
 
 interface P {
@@ -19,6 +20,7 @@ function useOrder(): AuthorIndex[] {
 /* ------------------------------ Interés ------------------------------ */
 
 export function InterestBody({ r }: P) {
+  const t = useT().interest;
   const { names } = useNames();
   const color = usePersonColor();
   const order = useOrder();
@@ -33,8 +35,8 @@ export function InterestBody({ r }: P) {
 
       {it.evolution.length > 0 && (
         <div className="mt-6">
-          <p className="mb-2 text-sm font-bold opacity-70">Evolución (4 tramos del chat)</p>
-          <svg viewBox="0 0 300 90" className="w-full" role="img" aria-label="Evolución del interés de cada persona">
+          <p className="mb-2 text-sm font-bold opacity-70">{t.evolution}</p>
+          <svg viewBox="0 0 300 90" className="w-full" role="img" aria-label={t.evolutionAria}>
             {order.map((a) => {
               const pts = it.evolution.map((e, i) => `${20 + i * 86.7},${80 - (e.total[a] / 100) * 70}`).join(' ');
               return <polyline key={a} className="line-draw" pathLength={1} points={pts} fill="none" style={{ stroke: color(a) }} strokeWidth={4} strokeLinejoin="round" strokeLinecap="round" />;
@@ -46,19 +48,19 @@ export function InterestBody({ r }: P) {
         </div>
       )}
 
-      <Explain summary="¿Cómo se calcula? (siempre a la vista)">
-        <p>Es una puntuación de 0 a 100 hecha con señales objetivas del chat. Cada señal tiene una escala absoluta, así que los dos podéis tener mucho (o poco) interés a la vez:</p>
+      <Explain summary={t.summary}>
+        <p>{t.intro}</p>
         <table className="mt-2 w-full text-left text-xs">
           <thead>
             <tr className="opacity-60">
-              <th className="py-1 pr-2">Señal (peso)</th>
+              <th className="py-1 pr-2">{t.signal}</th>
               {order.map((a) => <th key={a} className="py-1 pr-2">{names[a]}</th>)}
             </tr>
           </thead>
           <tbody>
             {it.components.map((c) => (
               <tr key={c.key} className="border-t border-ink/10 align-top">
-                <td className="py-1.5 pr-2 font-bold">{c.label} ({Math.round(c.weight * 100)} %)</td>
+                <td className="py-1.5 pr-2 font-bold">{c.label} ({t.weight(Math.round(c.weight * 100))})</td>
                 {order.map((a) => (
                   <td key={a} className="py-1.5 pr-2">
                     <b>{Math.round(c.scores[a])}</b> · {c.raw[a]}
@@ -68,7 +70,7 @@ export function InterestBody({ r }: P) {
             ))}
           </tbody>
         </table>
-        <p className="opacity-80">Escalas: responder al instante = 100 y tardar 24 h = 0 (escala logarítmica); 12+ palabras por mensaje = 100; 25 % de mensajes con pregunta = 100; empezar 2 de cada 3 conversaciones = 100. No mide sentimientos: mide comportamiento en el chat.</p>
+        <p className="opacity-80">{t.scales}</p>
       </Explain>
     </>
   );
@@ -77,12 +79,13 @@ export function InterestBody({ r }: P) {
 /* ------------------------------- Visto ------------------------------- */
 
 export function SeenBody({ r, hours }: P & { hours: number }) {
+  const t = useT().seen;
   const { names } = useNames();
   const color = usePersonColor();
   const order = useOrder();
   return (
     <>
-      <p className="mb-4 text-lg font-bold">Veces que cada uno dejó sin contestar un mensaje que pedía respuesta</p>
+      <p className="mb-4 text-lg font-bold">{t.lead}</p>
       <div className="grid grid-cols-2 gap-4">
         {order.map((a) => (
           <BigStat key={a} label={names[a]} value={r.seen.counts[a]} unit="👀" color={color(a)} />
@@ -90,21 +93,18 @@ export function SeenBody({ r, hours }: P & { hours: number }) {
       </div>
       {r.seen.examples.length > 0 && (
         <div className="mt-6 space-y-4">
-          <p className="text-sm font-bold opacity-70">Los que más esperaron</p>
+          <p className="text-sm font-bold opacity-70">{t.waited}</p>
           {r.seen.examples.slice(0, 3).map((e) => (
             <div key={e.message.id}>
               <Quote e={e.message} compact />
               <p className="mt-1 text-center text-sm font-bold">
-                {e.waitedMs === null ? '…nunca tuvo respuesta' : `⏳ ${formatDuration(e.waitedMs)} hasta la respuesta`}
+                {e.waitedMs === null ? t.never : t.until(formatDuration(e.waitedMs))}
               </p>
             </div>
           ))}
         </div>
       )}
-      <Estimate>
-        Estimación. El export de WhatsApp no incluye si un mensaje se leyó (los ticks azules). Contamos un “visto” cuando alguien
-        hizo una pregunta o insistió con varios mensajes y la otra persona tardó más de {hours} h en contestar (o nunca contestó).
-      </Estimate>
+      <Estimate>{t.estimate(hours)}</Estimate>
     </>
   );
 }
@@ -112,6 +112,7 @@ export function SeenBody({ r, hours }: P & { hours: number }) {
 /* ----------------------------- Silencios ----------------------------- */
 
 export function SilenceBody({ r, days }: P & { days: number }) {
+  const t = useT().silence;
   const { names } = useNames();
   const uni = r.silences.filter((s) => s.onlySpeaker !== null);
   const mutual = r.silences.filter((s) => s.onlySpeaker === null);
@@ -121,37 +122,30 @@ export function SilenceBody({ r, days }: P & { days: number }) {
     <>
       {end ? (
         <>
-          <p className="num text-6xl sm:text-7xl">{end.days} días</p>
-          <p className="mt-2 text-lg font-bold">
-            {names[end.onlySpeaker!]} escribió {end.unansweredMessages} mensajes sin respuesta hasta el final del chat.
-          </p>
+          <p className="num text-6xl sm:text-7xl">{t.days(end.days)}</p>
+          <p className="mt-2 text-lg font-bold">{t.endText(names[end.onlySpeaker!], end.unansweredMessages)}</p>
         </>
       ) : longest ? (
         <>
-          <p className="num text-6xl sm:text-7xl">{longest.days} días</p>
-          <p className="mt-2 text-lg font-bold">fue vuestro silencio más largo. Pero el chat no termina con una sola voz.</p>
+          <p className="num text-6xl sm:text-7xl">{t.days(longest.days)}</p>
+          <p className="mt-2 text-lg font-bold">{t.longestText}</p>
         </>
       ) : (
-        <p className="text-2xl font-extrabold">Ningún silencio de más de {days} días. Nada de desapariciones. 🙌</p>
+        <p className="text-2xl font-extrabold">{t.none(days)}</p>
       )}
 
       {(uni.length > 0 || mutual.length > 0) && (
         <ul className="mt-6 space-y-2 text-sm font-semibold">
           {r.silences.slice(0, 5).map((s) => (
             <li key={s.startTs} className="rounded-2xl bg-surface/60 px-4 py-2">
-              <b>{s.days} días</b> desde el {formatDate(s.startTs)} ·{' '}
-              {s.onlySpeaker === null
-                ? 'silencio de los dos'
-                : `solo escribía ${names[s.onlySpeaker]} (${s.unansweredMessages} mensajes)`}
-              {s.atEnd && ' · hasta el final'}
+              <b>{t.days(s.days)}</b> {t.since(formatDate(s.startTs))} ·{' '}
+              {s.onlySpeaker === null ? t.mutual : t.only(names[s.onlySpeaker], s.unansweredMessages)}
+              {s.atEnd && t.untilEnd}
             </li>
           ))}
         </ul>
       )}
-      <Estimate>
-        Es una inferencia, no un dato: el export no dice si alguien bloqueó a alguien. Un silencio unilateral es compatible con un
-        bloqueo, con que alguien dejó de contestar o con que hablasteis por otro sitio (en persona, llamadas, otra app).
-      </Estimate>
+      <Estimate>{t.estimate}</Estimate>
     </>
   );
 }
@@ -159,6 +153,7 @@ export function SilenceBody({ r, days }: P & { days: number }) {
 /* ----------------------------- Palabras ------------------------------ */
 
 export function WordsBody({ r }: P) {
+  const t = useT().words;
   const { names } = useNames();
   const color = usePersonColor();
   const order = useOrder();
@@ -178,14 +173,14 @@ export function WordsBody({ r }: P) {
           </ol>
         </div>
       ))}
-      <p className="text-sm opacity-70 sm:col-span-2">Sin palabras vacías (“que”, “de”, “the”…) en español e inglés. Las risas se agrupan: “jajajaj” = “jaja”.</p>
+      <p className="text-sm opacity-70 sm:col-span-2">{t.note}</p>
     </div>
   );
 }
 
 export function SharedBody({ r }: P) {
-  if (r.words.shared.length === 0)
-    return <p className="text-xl font-extrabold">Todavía no tenéis un idioma propio: ninguna expresión la usáis los dos lo bastante.</p>;
+  const t = useT().shared;
+  if (r.words.shared.length === 0) return <p className="text-xl font-extrabold">{t.none}</p>;
   return (
     <>
       <div className="flex flex-wrap gap-2">
@@ -199,24 +194,23 @@ export function SharedBody({ r }: P) {
           </span>
         ))}
       </div>
-      <Explain summary="¿Por qué estas?">
-        <p>Son palabras y expresiones de dos palabras que <b>los dos</b> usáis al menos 3 veces, ordenadas por lo compartidas que son (no por lo que repite solo uno). No tenemos un diccionario de “lo que dice todo el mundo”, así que tómalo como vuestro idioma dentro de este chat.</p>
-      </Explain>
+      <Explain summary={t.summary}>{t.explain()}</Explain>
     </>
   );
 }
 
 /* ------------------------------- Flags ------------------------------- */
 
-const SEV: Record<Flag['severity'], { icon: string; label: string; cls: string }> = {
-  red: { icon: '🚩', label: 'Red flag', cls: 'bg-surface' },
-  yellow: { icon: '⚠️', label: 'Ojo', cls: 'bg-surface/70' },
-  green: { icon: '💚', label: 'Green flag', cls: 'bg-surface/40' },
+const SEV: Record<Flag['severity'], { icon: string; cls: string }> = {
+  red: { icon: '🚩', cls: 'bg-surface' },
+  yellow: { icon: '⚠️', cls: 'bg-surface/70' },
+  green: { icon: '💚', cls: 'bg-surface/40' },
 };
 
 export function FlagsBody({ r }: P) {
+  const t = useT().flags;
   const { fill } = useNames();
-  if (r.flags.length === 0) return <p className="text-xl font-extrabold">Ni red ni green flags claras: un chat bastante neutro.</p>;
+  if (r.flags.length === 0) return <p className="text-xl font-extrabold">{t.none}</p>;
   const reds = r.flags.filter((f) => f.severity === 'red').length;
   return (
     <>
@@ -224,12 +218,12 @@ export function FlagsBody({ r }: P) {
       <ul className="space-y-4">
         {r.flags.map((f) => (
           <li key={f.id} className={`rounded-3xl p-4 ${SEV[f.severity].cls}`}>
-            <p className="text-xs font-bold uppercase tracking-widest opacity-60">{SEV[f.severity].icon} {SEV[f.severity].label} · {f.metric}</p>
+            <p className="text-xs font-bold uppercase tracking-widest opacity-60">{SEV[f.severity].icon} {t.sev[f.severity]} · {f.metric}</p>
             <p className="mt-1 text-xl font-extrabold leading-tight">{f.title}</p>
             <p className="mt-1 font-semibold leading-snug">{fill(f.detail)}</p>
             {f.evidence.length > 0 && (
               <details className="mt-3">
-                <summary className="cursor-pointer text-sm font-bold">Ver evidencia del chat ({f.evidence.length})</summary>
+                <summary className="cursor-pointer text-sm font-bold">{t.evidence(f.evidence.length)}</summary>
                 <div className="mt-3 space-y-3">
                   {f.evidence.map((e) => <Quote key={e.id} e={e} compact maxLines={4} />)}
                 </div>

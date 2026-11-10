@@ -5,6 +5,7 @@
 import type { AuthorIndex, Report } from '../../core/types';
 import { durationParts, formatDate, formatDuration, formatMonth, nf } from '../../core/format';
 import { useNames } from '../../lib/names';
+import { useT } from '../../lib/i18n';
 import { BigStat, CountUp, Explain, Pill, Quote, VersusBar, usePersonColor } from '../ui';
 
 export interface BodyProps {
@@ -20,19 +21,20 @@ function useOrder(): AuthorIndex[] {
 }
 
 export function MessagesBody({ r }: BodyProps) {
+  const t = useT();
   const { names } = useNames();
   const color = usePersonColor();
   const order = useOrder();
   return (
     <>
       <div className="num text-[5.5rem] sm:text-9xl"><CountUp value={r.meta.totalMessages} /></div>
-      <p className="-mt-1 mb-6 text-lg font-bold">mensajes en {nf.format(r.meta.durationDays)} días</p>
+      <p className="-mt-1 mb-6 text-lg font-bold">{t.messages.inDays(nf.format(r.meta.durationDays))}</p>
       <div className="mb-6 grid grid-cols-2 gap-4">
         {order.map((a) => (
-          <BigStat key={a} label={names[a]} value={<CountUp value={r.counts.messages[a]} />} color={color(a)} sub={`${nf.format(r.counts.words[a])} palabras`} />
+          <BigStat key={a} label={names[a]} value={<CountUp value={r.counts.messages[a]} />} color={color(a)} sub={t.messages.words(nf.format(r.counts.words[a]))} />
         ))}
       </div>
-      <VersusBar values={r.counts.messages} label="Reparto de mensajes" />
+      <VersusBar values={r.counts.messages} label={t.card.split} />
       <div className="mt-5 flex flex-wrap gap-2">
         {order.map((a) => (
           <Pill key={a}>
@@ -45,12 +47,13 @@ export function MessagesBody({ r }: BodyProps) {
 }
 
 export function ResponseBody({ r }: BodyProps) {
+  const t = useT().response;
   const { names } = useNames();
   const color = usePersonColor();
   const order = useOrder();
   return (
     <>
-      <p className="mb-3 text-sm font-bold uppercase tracking-wider opacity-70">Mediana · lo que tarda normalmente</p>
+      <p className="mb-3 text-sm font-bold uppercase tracking-wider opacity-70">{t.median}</p>
       <div className="grid grid-cols-2 gap-4">
         {order.map((a) => {
           const [v, u] = durationParts(r.responses[a].medianMs);
@@ -60,40 +63,27 @@ export function ResponseBody({ r }: BodyProps) {
       <dl className="mt-5 grid grid-cols-2 gap-4 rounded-2xl bg-surface/50 px-4 py-3 text-sm">
         {order.map((a) => (
           <div key={a}>
-            <dt className="font-bold opacity-70">Media de {names[a]}</dt>
+            <dt className="font-bold opacity-70">{t.meanOf(names[a])}</dt>
             <dd className="text-lg font-extrabold">{formatDuration(r.responses[a].meanMs)}</dd>
           </div>
         ))}
       </dl>
-      <Explain summary="¿Mediana o media?">
-        <p>
-          La <b>mediana</b> (el número grande) es la respuesta típica: la mitad de las veces contesta más rápido y la otra mitad más
-          lento. Un par de respuestas de 8 horas no la mueven.
-        </p>
-        <p>
-          La <b>media</b> (abajo) suma todos los tiempos y divide: unas pocas respuestas muy lentas la disparan. Por eso suele ser
-          bastante mayor que la mediana.
-        </p>
-        <p>
-          Solo contamos como respuesta un cambio de persona dentro de la misma conversación. Si pasan más de
-          las horas de “nueva conversación”, eso cuenta como iniciativa, no como respuesta lenta.
-        </p>
-        <p>
-          El 10 % de respuestas más lentas: {names[order[0]]} {formatDuration(r.responses[order[0]].p90Ms)}, {names[order[1]]} {formatDuration(r.responses[order[1]].p90Ms)}.
-        </p>
+      <Explain summary={t.summary}>
+        {t.explain({ a: names[order[0]], pa: formatDuration(r.responses[order[0]].p90Ms), b: names[order[1]], pb: formatDuration(r.responses[order[1]].p90Ms) })}
       </Explain>
     </>
   );
 }
 
 export function FirstBody({ r }: BodyProps) {
+  const t = useT().first;
   const { names } = useNames();
-  if (!r.firstMessage) return <p>No encontramos el primer mensaje.</p>;
+  if (!r.firstMessage) return <p>{t.none}</p>;
   return (
     <>
       <p className="num mb-1 text-5xl sm:text-6xl">{formatDate(r.firstMessage.ts, { day: 'numeric', month: 'long' })}</p>
       <p className="mb-6 text-lg font-bold">
-        de {new Date(r.firstMessage.ts).getFullYear()} · lo escribió {names[r.firstMessage.author]}
+        {t.by(new Date(r.firstMessage.ts).getFullYear(), names[r.firstMessage.author])}
       </p>
       <Quote e={r.firstMessage} />
     </>
@@ -101,31 +91,33 @@ export function FirstBody({ r }: BodyProps) {
 }
 
 export function InitiatorBody({ r, gapHours }: BodyProps & { gapHours: number }) {
+  const t = useT().initiator;
   const { names } = useNames();
   const color = usePersonColor();
   const order = useOrder();
-  const t = r.initiations.total;
-  const total = t[0] + t[1] || 1;
-  const top: AuthorIndex = t[0] >= t[1] ? 0 : 1;
+  const tot = r.initiations.total;
+  const total = tot[0] + tot[1] || 1;
+  const top: AuthorIndex = tot[0] >= tot[1] ? 0 : 1;
   return (
     <>
-      <p className="mb-1 text-lg font-bold">Escribe primero</p>
+      <p className="mb-1 text-lg font-bold">{t.writesFirst}</p>
       <p className="num mb-2 text-6xl sm:text-7xl" style={{ color: color(top) }}>{names[top]}</p>
-      <p className="mb-6 text-lg font-bold">{Math.round((t[top] / total) * 100)} % de {nf.format(r.initiations.sessions)} conversaciones</p>
-      <VersusBar values={t} label="Inicios de conversación" />
+      <p className="mb-6 text-lg font-bold">{t.share(Math.round((tot[top] / total) * 100), nf.format(r.initiations.sessions))}</p>
+      <VersusBar values={tot} label={t.bar} />
       <div className="mt-4 flex flex-wrap gap-2">
         {order.map((a) => (
-          <Pill key={a}>{names[a]} cierra {r.endings[a]} conversaciones</Pill>
+          <Pill key={a}>{t.closes(names[a], r.endings[a])}</Pill>
         ))}
       </div>
       <Explain>
-        <p>Una “conversación nueva” empieza cuando alguien escribe tras más de <b>{gapHours} horas</b> de silencio. Puedes cambiar ese umbral en los ajustes del informe.</p>
+        {t.explain(gapHours)}
       </Explain>
     </>
   );
 }
 
 export function LongestBody({ r }: BodyProps) {
+  const t = useT().longest;
   const { names } = useNames();
   const order = useOrder();
   return (
@@ -134,12 +126,12 @@ export function LongestBody({ r }: BodyProps) {
         r.longest[a] ? (
           <div key={a}>
             <p className="mb-2 text-sm font-bold opacity-70">
-              {names[a]} · {nf.format(r.longestWords[a])} palabras
+              {t.words(names[a], nf.format(r.longestWords[a]))}
             </p>
             <Quote e={r.longest[a]!} maxLines={10} />
           </div>
         ) : (
-          <p key={a} className="font-bold">{names[a]} no tiene mensajes de texto.</p>
+          <p key={a} className="font-bold">{t.noText(names[a])}</p>
         ),
       )}
     </div>
@@ -147,6 +139,7 @@ export function LongestBody({ r }: BodyProps) {
 }
 
 export function DeletedBody({ r }: BodyProps) {
+  const t = useT().deleted;
   const { names } = useNames();
   const color = usePersonColor();
   const order = useOrder();
@@ -157,8 +150,8 @@ export function DeletedBody({ r }: BodyProps) {
           <BigStat key={a} label={names[a]} value={<CountUp value={r.deleted[a]} />} unit="🗑️" color={color(a)} />
         ))}
       </div>
-      <Explain summary="¿Cómo lo sabemos?">
-        <p>WhatsApp deja en el export “Eliminaste este mensaje” / “Se eliminó este mensaje” (y sus versiones en inglés). El contenido borrado no está en el archivo: nadie puede recuperarlo, tampoco nosotros.</p>
+      <Explain summary={t.summary}>
+        <p>{t.explain}</p>
       </Explain>
     </>
   );
@@ -167,6 +160,7 @@ export function DeletedBody({ r }: BodyProps) {
 /* ---------------------------- Línea temporal --------------------------- */
 
 export function TimelineBody({ r }: BodyProps) {
+  const t = useT().timeline;
   const { names } = useNames();
   const color = usePersonColor();
   const order = useOrder();
@@ -182,12 +176,12 @@ export function TimelineBody({ r }: BodyProps) {
   return (
     <>
       <div className="mb-6 grid grid-cols-2 gap-4">
-        <BigStat label="Días en el chat" value={<CountUp value={r.meta.durationDays} />} sub={`${formatDate(r.meta.firstTs)} → ${formatDate(r.meta.lastTs)}`} />
-        <BigStat label="Racha más larga" value={tl.longestStreakDays} unit="días" sub={`${nf.format(tl.activeDays)} días con mensajes`} />
+        <BigStat label={t.days} value={<CountUp value={r.meta.durationDays} />} sub={`${formatDate(r.meta.firstTs)} → ${formatDate(r.meta.lastTs)}`} />
+        <BigStat label={t.streak} value={tl.longestStreakDays} unit={t.daysUnit} sub={t.activeDays(nf.format(tl.activeDays))} />
       </div>
 
       <figure>
-        <svg viewBox={`0 0 ${W} ${H + 18}`} className="w-full" role="img" aria-label="Mensajes por mes de cada persona">
+        <svg viewBox={`0 0 ${W} ${H + 18}`} className="w-full" role="img" aria-label={t.monthsAria}>
           {months.map((m, i) => {
             const h0 = (m.counts[order[0]] / max) * H;
             const h1 = (m.counts[order[1]] / max) * H;
@@ -209,16 +203,16 @@ export function TimelineBody({ r }: BodyProps) {
       </figure>
 
       <div className="mt-5 flex flex-col gap-2 text-base font-bold">
-        {tl.mostActiveMonth && <p>🔥 Mes más intenso: {formatMonth(tl.mostActiveMonth.month)} ({nf.format(tl.mostActiveMonth.counts[0] + tl.mostActiveMonth.counts[1])} mensajes)</p>}
-        {tl.leastActiveMonth && months.length > 1 && <p>🧊 Mes más flojo: {formatMonth(tl.leastActiveMonth.month)} ({nf.format(tl.leastActiveMonth.counts[0] + tl.leastActiveMonth.counts[1])})</p>}
-        {tl.peakDay && <p>📈 Día récord: {formatDate(new Date(tl.peakDay.date + 'T12:00:00').getTime())} con {tl.peakDay.count} mensajes</p>}
+        {tl.mostActiveMonth && <p>{t.mostActive(formatMonth(tl.mostActiveMonth.month), nf.format(tl.mostActiveMonth.counts[0] + tl.mostActiveMonth.counts[1]))}</p>}
+        {tl.leastActiveMonth && months.length > 1 && <p>{t.leastActive(formatMonth(tl.leastActiveMonth.month), nf.format(tl.leastActiveMonth.counts[0] + tl.leastActiveMonth.counts[1]))}</p>}
+        {tl.peakDay && <p>{t.peak(formatDate(new Date(tl.peakDay.date + 'T12:00:00').getTime()), tl.peakDay.count)}</p>}
       </div>
 
-      <p className="mt-6 mb-2 text-sm font-bold opacity-70">¿A qué hora habláis?</p>
-      <svg viewBox="0 0 240 50" className="w-full" role="img" aria-label="Mensajes por hora del día">
+      <p className="mt-6 mb-2 text-sm font-bold opacity-70">{t.hoursQ}</p>
+      <svg viewBox="0 0 240 50" className="w-full" role="img" aria-label={t.hoursAria}>
         {hoursTotal.map((v, h) => (
           <rect key={h} x={h * 10 + 1} y={40 - (v / hMax) * 38} width={8} height={(v / hMax) * 38 + 1} rx={2} style={{ fill: 'var(--color-me)' }} opacity={0.25 + 0.75 * (v / hMax)}>
-            <title>{`${h}:00 · ${v} mensajes`}</title>
+            <title>{t.hourTitle(h, v)}</title>
           </rect>
         ))}
         {[0, 6, 12, 18, 23].map((h) => (

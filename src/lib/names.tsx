@@ -14,6 +14,8 @@
 import { createContext, useContext, useMemo, type ReactNode } from 'react';
 import type { AuthorIndex, Pair } from '../core/types';
 import { makeScrubber } from '../core/anonymize';
+import { tr } from '../core/i18n';
+import { useI18n } from './i18n';
 
 interface NamesCtx {
   names: Pair<string>;
@@ -33,8 +35,9 @@ function firstName(n: string) {
 
 /** Nombres visibles [persona 0, persona 1]. También los usa la portada del PDF. */
 export function displayNames(realNames: Pair<string>, me: AuthorIndex, alias: string, hidden: boolean, myAlias?: string): Pair<string> {
-  const myName = hidden ? 'Persona A' : myAlias?.trim() || firstName(realNames[me]);
-  const otherName = hidden ? 'Persona B' : alias || firstName(realNames[me === 0 ? 1 : 0]);
+  const [labelA, labelB] = tr({ es: ['Persona A', 'Persona B'], en: ['Person A', 'Person B'] });
+  const myName = hidden ? labelA : myAlias?.trim() || firstName(realNames[me]);
+  const otherName = hidden ? labelB : alias || firstName(realNames[me === 0 ? 1 : 0]);
   return me === 0 ? [myName, otherName] : [otherName, myName];
 }
 
@@ -52,6 +55,8 @@ export function NamesProvider(props: {
   children: ReactNode;
 }) {
   const { realNames, me, alias, myAlias, hidden } = props;
+  // Las etiquetas "Persona A/B" dependen del idioma.
+  const { lang } = useI18n();
   const value = useMemo<NamesCtx>(() => {
     const names = displayNames(realNames, me, alias, hidden, myAlias);
     const known: Pair<string> = [...realNames];
@@ -64,7 +69,7 @@ export function NamesProvider(props: {
       fill: (s) => fillNames(s, names),
       quote: (s) => (hidden ? scrub(s) : s),
     };
-  }, [realNames, me, alias, myAlias, hidden]);
+  }, [realNames, me, alias, myAlias, hidden, lang]);
   return <Ctx.Provider value={value}>{props.children}</Ctx.Provider>;
 }
 

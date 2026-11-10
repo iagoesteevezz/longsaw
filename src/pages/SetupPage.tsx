@@ -16,6 +16,9 @@ import { RELATIONS } from '../lib/relations';
 import { Ticks } from '../components/ChatToChart';
 import { LogoMark } from '../components/Logo';
 import { ThemeToggle } from '../components/ThemeToggle';
+import { LangToggle } from '../components/LangToggle';
+import { useI18n, useT } from '../lib/i18n';
+import { LOCALE_TAG } from '../core/i18n';
 
 type Step = 'me' | 'name' | 'relation' | 'alias' | 'confirm';
 const ANSWER_ORDER = ['me', 'name', 'relation', 'alias'] as const;
@@ -41,8 +44,10 @@ const typingDelay = (text: string) => 380 + Math.min(950, text.length * 16);
 
 export function SetupPage(props: { summary: ChatSummary; onSubmit: (o: AnalysisOptions) => void; onCancel: () => void }) {
   const s = props.summary;
+  const { lang, t } = useI18n();
+  const q = t.setup;
   const reduced = useMemo(() => matchMedia('(prefers-reduced-motion: reduce)').matches, []);
-  const time = useMemo(() => new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }), []);
+  const time = useMemo(() => new Date().toLocaleTimeString(LOCALE_TAG[lang], { hour: '2-digit', minute: '2-digit' }), [lang]);
   const placeholderIdx = s.participants.findIndex((p) => isSelfPlaceholder(p.name));
   const guess: AuthorIndex | null = s.exporterGuess ?? (placeholderIdx >= 0 ? (placeholderIdx as AuthorIndex) : null);
 
@@ -81,40 +86,34 @@ export function SetupPage(props: { summary: ChatSummary; onSubmit: (o: AnalysisO
   const bot = (id: string, text: string, node?: ReactNode) => items.push({ id, side: 'bot', text, node });
   const me = (id: string, text: string, rewindTo: Step) => items.push({ id, side: 'me', text, rewind: rewindTo });
 
-  bot('hi', '¡Hola! 👋 Ya he leído vuestro chat.');
-  bot(
-    'stats',
-    `Son ${nf.format(s.totalMessages)} mensajes, del ${formatDate(s.firstTs)} al ${formatDate(s.lastTs)}. Antes de hacer el informe, unas preguntas rápidas.`,
-    <>
-      Son <b>{nf.format(s.totalMessages)} mensajes</b>, del {formatDate(s.firstTs)} al {formatDate(s.lastTs)}. Antes de hacer el informe, unas preguntas rápidas.
-    </>,
-  );
-  s.warnings.forEach((w, i) => bot(`warn-${i}`, `⚠️ ${w}`));
+  bot('hi', q.hi);
+  bot('stats', ...q.stats(nf.format(s.totalMessages), formatDate(s.firstTs), formatDate(s.lastTs)));
+  s.warnings.forEach((w, i) => bot(`warn-${i}`, `⚠️ ${t.warning(w)}`));
 
   for (const st of steps) {
     if (st === 'me') {
-      bot('q-me', '¿Quién de los dos eres tú?');
+      bot('q-me', q.whoQ);
       if (guess !== null) {
         const g = s.participants[guess].name;
-        bot('q-me-guess', isSelfPlaceholder(g) ? `Uno de los dos sale como «${g}» en el archivo: diría que eres tú 👀` : `Diría que eres ${g}, pero confírmamelo 👀`);
+        bot('q-me-guess', isSelfPlaceholder(g) ? q.guessPlaceholder(g) : q.guess(g));
       }
-      if (a.me !== undefined) me('a-me', isSelfPlaceholder(myRaw) ? `Soy «${myRaw}»` : `Soy ${myRaw}`, 'me');
+      if (a.me !== undefined) me('a-me', isSelfPlaceholder(myRaw) ? q.iAmPlaceholder(myRaw) : q.iAm(myRaw), 'me');
     } else if (st === 'name') {
-      bot('q-name', `En el archivo sales como «${myRaw}» 😅 ¿Cómo te llamas? Así las frases sonarán bien.`);
+      bot('q-name', q.nameQ(myRaw));
       if (a.name) me('a-name', a.name, 'name');
     } else if (st === 'relation') {
-      bot('q-rel', `${myShown ? `¡Genial, ${myShown}! ` : '¡Genial! '}¿Y quién es ${defaultAlias || 'la otra persona'} para ti?`);
-      bot('q-rel-hint', 'Cambia el tono, los apartados y los consejos del informe.');
+      bot('q-rel', q.relQ(myShown, defaultAlias));
+      bot('q-rel-hint', q.relHint);
       if (a.relation) {
         const r = RELATIONS.find((x) => x.id === a.relation)!;
-        me('a-rel', `${r.emoji} ${r.label}`, 'relation');
+        me('a-rel', `${r.emoji} ${t.relations[r.id]}`, 'relation');
       }
     } else if (st === 'alias') {
-      bot('q-alias', `¿Cómo quieres que salga ${defaultAlias || 'la otra persona'} en el informe? Puedes ponerle un apodo.`);
+      bot('q-alias', q.aliasQ(defaultAlias));
       if (a.alias !== undefined) me('a-alias', a.alias, 'alias');
     } else {
-      bot('q-done', '¡Listo! Ya tengo todo lo que necesito 🙌');
-      bot('q-done-2', 'Al compartir tarjetas o el PDF los nombres se ocultan por defecto. ¿Lo analizo?');
+      bot('q-done', q.done[0]);
+      bot('q-done-2', q.done[1]);
     }
     if (st === current) break;
   }
@@ -158,7 +157,8 @@ export function SetupPage(props: { summary: ChatSummary; onSubmit: (o: AnalysisO
     props.onSubmit({
       me: a.me,
       relation: a.relation,
-      otherAlias: (a.alias ?? defaultAlias).trim() || 'Otra persona',
+      otherAlias: (a.alias ?? defaultAlias).trim() || t.common.otherPerson,
+      lang,
       ...(needName && a.name ? { myAlias: a.name } : {}),
       sessionGapHours: gap,
       seenThresholdHours: seen,
@@ -171,7 +171,7 @@ export function SetupPage(props: { summary: ChatSummary; onSubmit: (o: AnalysisO
       {/* --------------------------- Cabecera de chat --------------------------- */}
       <header className="wa-gradient z-10 text-white shadow-[0_2px_10px_-4px_rgb(0_0_0/0.4)]">
         <div className="mx-auto flex max-w-2xl items-center gap-3 px-3 py-2.5">
-          <button type="button" onClick={props.onCancel} aria-label="Elegir otro archivo" className="press grid h-10 w-10 place-items-center rounded-full hover:bg-white/10">
+          <button type="button" onClick={props.onCancel} aria-label={q.backAria} className="press grid h-10 w-10 place-items-center rounded-full hover:bg-white/10">
             <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
               <path d="M15 5l-7 7 7 7" />
             </svg>
@@ -179,8 +179,9 @@ export function SetupPage(props: { summary: ChatSummary; onSubmit: (o: AnalysisO
           <LogoMark className="h-10 w-10 shrink-0 rounded-full ring-1 ring-white/20" />
           <div className="min-w-0 flex-1 leading-tight">
             <p className="font-brand text-xl font-semibold">longsaw</p>
-            <p className="text-sm font-semibold text-white/75" aria-hidden>{typing ? 'escribiendo…' : 'en línea'}</p>
+            <p className="text-sm font-semibold text-white/75" aria-hidden>{typing ? q.typing : q.online}</p>
           </div>
+          <LangToggle />
           <ThemeToggle />
         </div>
       </header>
@@ -188,9 +189,9 @@ export function SetupPage(props: { summary: ChatSummary; onSubmit: (o: AnalysisO
       {/* ------------------------------ Mensajes ------------------------------ */}
       <div className="setup-chat min-h-0 flex-1 overflow-y-auto">
         <div className="mx-auto flex max-w-2xl flex-col gap-1.5 px-3 pb-4 pt-4 sm:px-5" role="log" aria-live="polite">
-          <p className="mx-auto mb-1 rounded-lg bg-surface/80 px-3 py-1 text-xs font-bold uppercase tracking-wide text-ink/60">Hoy</p>
+          <p className="mx-auto mb-1 rounded-lg bg-surface/80 px-3 py-1 text-xs font-bold uppercase tracking-wide text-ink/60">{q.today}</p>
           <p className="mx-auto mb-3 max-w-sm rounded-xl bg-[#fff3c4] dark:bg-[#182229] px-4 py-2 text-center text-[13px] font-semibold leading-snug text-[#54451a] dark:text-[#ffd279]">
-            🔒 Este chat se analiza en tu navegador. Nada se sube y nadie más puede leerlo.
+            {q.notice}
           </p>
 
           {items.slice(0, visible).map((it, i) => {
@@ -210,13 +211,13 @@ export function SetupPage(props: { summary: ChatSummary; onSubmit: (o: AnalysisO
                 key={it.id}
                 type="button"
                 onClick={() => it.rewind && rewind(it.rewind)}
-                aria-label={`${it.text}. Toca para cambiar la respuesta`}
-                title="Cambiar respuesta"
+                aria-label={q.changeAria(it.text)}
+                title={q.changeTitle}
                 className={`chat-in group max-w-[85%] self-end rounded-2xl bg-wa-bubble px-3.5 py-2 text-left text-[15px] font-bold leading-snug shadow-[0_1px_0.5px_rgb(11_20_26/0.13)] transition hover:brightness-95 sm:max-w-[70%] ${first ? 'mt-2 rounded-tr-sm' : ''}`}
               >
                 {it.text}
                 <span className="ml-3 inline-flex translate-y-1 items-center gap-1 text-[11px] font-semibold text-muted">
-                  <span className="hidden group-hover:inline">cambiar ·</span>
+                  <span className="hidden group-hover:inline">{q.change}</span>
                   {time} <Ticks read={read} />
                 </span>
               </button>
@@ -224,7 +225,7 @@ export function SetupPage(props: { summary: ChatSummary; onSubmit: (o: AnalysisO
           })}
 
           {typing && (
-            <div className="typing mt-2" aria-label="longsaw está escribiendo">
+            <div className="typing mt-2" aria-label={q.typingAria}>
               <i /><i /><i />
             </div>
           )}
@@ -236,51 +237,51 @@ export function SetupPage(props: { summary: ChatSummary; onSubmit: (o: AnalysisO
       <footer className="border-t border-ink/5 bg-[#f0ebe4] dark:bg-[#1f2c33] pb-[max(0.75rem,env(safe-area-inset-bottom))]">
         <div className="mx-auto max-w-2xl px-3 pt-3 sm:px-5">
           {!settled ? (
-            <Composer disabled placeholder="longsaw está escribiendo…" initial="" onSend={() => {}} />
+            <Composer disabled placeholder={q.waiting} initial="" onSend={() => {}} />
           ) : current === 'me' ? (
-            <Choices label="¿Quién eres tú?">
+            <Choices label={q.whoGroup}>
               {s.participants.map((p, i) => (
                 <Choice key={i} n={i} disabled={p.messageCount === 0} onClick={() => setA({ me: i as AuthorIndex })}>
                   {p.name}
-                  <span className="ml-1.5 font-semibold opacity-60">· {nf.format(p.messageCount)} msj</span>
+                  <span className="ml-1.5 font-semibold opacity-60">· {nf.format(p.messageCount)} {q.msgShort}</span>
                 </Choice>
               ))}
             </Choices>
           ) : current === 'name' ? (
-            <Composer key="name" placeholder="Tu nombre o apodo" initial="" onSend={(v) => setA((p) => ({ ...p, name: v }))} />
+            <Composer key="name" placeholder={q.namePh} initial="" onSend={(v) => setA((p) => ({ ...p, name: v }))} />
           ) : current === 'relation' ? (
-            <Choices label="Tipo de relación">
+            <Choices label={q.relGroup}>
               {RELATIONS.map((r, i) => (
                 <Choice key={r.id} n={i} onClick={() => setA((p) => ({ ...p, relation: r.id }))}>
-                  {r.emoji} {r.label}
+                  {r.emoji} {t.relations[r.id]}
                 </Choice>
               ))}
             </Choices>
           ) : current === 'alias' ? (
             <>
               {defaultAlias && (
-                <Choices label="Nombre de la otra persona">
+                <Choices label={q.aliasGroup}>
                   <Choice n={0} onClick={() => setA((p) => ({ ...p, alias: defaultAlias }))}>
-                    Déjalo como «{defaultAlias}»
+                    {q.keepAs(defaultAlias)}
                   </Choice>
                 </Choices>
               )}
               <div className={defaultAlias ? 'mt-2' : ''}>
-                <Composer key="alias" placeholder="O escribe un apodo" initial="" onSend={(v) => setA((p) => ({ ...p, alias: v }))} />
+                <Composer key="alias" placeholder={q.aliasPh} initial="" onSend={(v) => setA((p) => ({ ...p, alias: v }))} />
               </div>
             </>
           ) : (
             <>
               {advanced && (
                 <div className="chat-in mb-3 rounded-2xl bg-surface px-4 pb-4 pt-1">
-                  <Range label="Nueva conversación tras un silencio de" value={gap} min={1} max={24} unit="h" onChange={setGap} />
-                  <Range label="Contar “visto” si no responde en" value={seen} min={2} max={72} unit="h" onChange={setSeen} />
-                  <Range label="Silencio largo / posible bloqueo a partir de" value={silence} min={2} max={30} unit="días" onChange={setSilence} />
+                  <Range label={q.gap} value={gap} min={1} max={24} unit={q.hours} onChange={setGap} />
+                  <Range label={q.seen} value={seen} min={2} max={72} unit={q.hours} onChange={setSeen} />
+                  <Range label={q.silence} value={silence} min={2} max={30} unit={q.days} onChange={setSilence} />
                 </div>
               )}
               <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
                 <button type="button" onClick={() => setAdvanced((v) => !v)} aria-expanded={advanced} className="press chip-in rounded-full bg-surface px-5 py-3 font-extrabold text-wa-dark dark:text-wa-green ring-1 ring-wa-teal/30 hover:bg-wa-bubble">
-                  ⚙️ {advanced ? 'Ocultar ajustes' : 'Ajustes avanzados'}
+                  ⚙️ {advanced ? q.settingsHide : q.settingsShow}
                 </button>
                 <button
                   type="button"
@@ -288,7 +289,7 @@ export function SetupPage(props: { summary: ChatSummary; onSubmit: (o: AnalysisO
                   style={{ animationDelay: '60ms' }}
                   className="press chip-in rounded-full bg-wa-green px-7 py-3 text-lg font-extrabold text-wa-ink shadow-[0_14px_30px_-14px_rgb(37_211_102/0.8)] hover:bg-[#3ee07a]"
                 >
-                  Analizar chat →
+                  {q.analyze}
                 </button>
               </div>
             </>
@@ -326,6 +327,7 @@ function Choice(p: { n: number; disabled?: boolean; onClick: () => void; childre
 /** Barra de escribir como la de WhatsApp. */
 function Composer(p: { placeholder: string; initial: string; disabled?: boolean; onSend: (v: string) => void }) {
   const [v, setV] = useState(p.initial);
+  const sendLabel = useT().setup.send;
   const send = (e: FormEvent) => {
     e.preventDefault();
     const t = v.trim();
@@ -346,7 +348,7 @@ function Composer(p: { placeholder: string; initial: string; disabled?: boolean;
       <button
         type="submit"
         disabled={p.disabled || !v.trim()}
-        aria-label="Enviar"
+        aria-label={sendLabel}
         className="press grid h-12 w-12 shrink-0 place-items-center rounded-full bg-wa-teal text-white disabled:opacity-40"
       >
         <svg viewBox="0 0 24 24" className="h-5 w-5 translate-x-px" fill="currentColor" aria-hidden>

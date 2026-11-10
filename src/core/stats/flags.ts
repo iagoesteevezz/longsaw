@@ -14,7 +14,8 @@ import type { AuthorIndex, Excerpt, Flag, Pair, Relation, Report } from '../type
 import type { Ctx } from './context';
 import type { Run } from './silence';
 import { HOUR, excerpt, isQuestion, monthKey, other, wordCount } from './util';
-import { formatDuration } from '../format';
+import { dec1, formatDuration } from '../format';
+import { tr } from '../i18n';
 
 const T = {
   minSessions: 10,
@@ -66,20 +67,26 @@ export function flags(i: Inputs): Flag[] {
       out.push({
         id: 'initiative',
         severity: share >= T.initiativeRed ? 'red' : 'yellow',
-        title: 'La iniciativa va en una sola dirección',
+        title: tr({ es: 'La iniciativa va en una sola dirección', en: 'Initiative only goes one way' }),
         who: other(top),
-        detail: `${P(top)} empieza ${Math.round(share * 100)} de cada 100 conversaciones. ${P(other(top))} casi nunca abre la conversación.`,
-        metric: `${i.init.total[top]} de ${i.init.sessions} inicios`,
+        detail: tr({
+          es: `${P(top)} empieza ${Math.round(share * 100)} de cada 100 conversaciones. ${P(other(top))} casi nunca abre la conversación.`,
+          en: `${P(top)} starts ${Math.round(share * 100)} out of every 100 conversations. ${P(other(top))} almost never opens one.`,
+        }),
+        metric: tr({ es: `${i.init.total[top]} de ${i.init.sessions} inicios`, en: `${i.init.total[top]} of ${i.init.sessions} starts` }),
         evidence: examples,
       });
     } else if (share <= 0.6) {
       out.push({
         id: 'initiative-balanced',
         severity: 'green',
-        title: 'Iniciativa equilibrada',
+        title: tr({ es: 'Iniciativa equilibrada', en: 'Balanced initiative' }),
         who: null,
-        detail: 'Los dos abrís conversación más o menos lo mismo. Nadie tira solo del carro.',
-        metric: `${i.init.total[0]} vs ${i.init.total[1]} inicios`,
+        detail: tr({
+          es: 'Los dos abrís conversación más o menos lo mismo. Nadie tira solo del carro.',
+          en: 'You both start conversations about equally. Nobody is pulling alone.',
+        }),
+        metric: tr({ es: `${i.init.total[0]} vs ${i.init.total[1]} inicios`, en: `${i.init.total[0]} vs ${i.init.total[1]} starts` }),
         evidence: [],
       });
     }
@@ -99,20 +106,23 @@ export function flags(i: Inputs): Flag[] {
       out.push({
         id: 'reply-gap',
         severity: ratio >= T.replyRatioRed ? 'red' : 'yellow',
-        title: 'Uno contesta al momento, el otro cuando puede',
+        title: tr({ es: 'Uno contesta al momento, el otro cuando puede', en: 'One replies instantly, the other whenever' }),
         who: slow,
-        detail: `${P(slow)} tarda ${ratio.toFixed(1).replace('.', ',')} veces más en responder (mediana ${formatDuration(Math.max(m0, m1))} frente a ${formatDuration(Math.min(m0, m1))}).`,
-        metric: `mediana ${formatDuration(m0)} vs ${formatDuration(m1)}`,
+        detail: tr({
+          es: `${P(slow)} tarda ${dec1(ratio)} veces más en responder (mediana ${formatDuration(Math.max(m0, m1))} frente a ${formatDuration(Math.min(m0, m1))}).`,
+          en: `${P(slow)} takes ${dec1(ratio)} times longer to reply (median ${formatDuration(Math.max(m0, m1))} vs ${formatDuration(Math.min(m0, m1))}).`,
+        }),
+        metric: tr({ es: `mediana ${formatDuration(m0)} vs ${formatDuration(m1)}`, en: `median ${formatDuration(m0)} vs ${formatDuration(m1)}` }),
         evidence: slowest,
       });
     } else if (Math.max(m0, m1) < 10 * 60_000) {
       out.push({
         id: 'fast-both',
         severity: 'green',
-        title: 'Respuestas rápidas por las dos partes',
+        title: tr({ es: 'Respuestas rápidas por las dos partes', en: 'Quick replies on both sides' }),
         who: null,
-        detail: 'Los dos respondéis en minutos. Hay ganas de hablar.',
-        metric: `mediana ${formatDuration(m0)} y ${formatDuration(m1)}`,
+        detail: tr({ es: 'Los dos respondéis en minutos. Hay ganas de hablar.', en: 'You both reply within minutes. There’s a real wish to talk.' }),
+        metric: tr({ es: `mediana ${formatDuration(m0)} y ${formatDuration(m1)}`, en: `median ${formatDuration(m0)} and ${formatDuration(m1)}` }),
         evidence: [],
       });
     }
@@ -135,10 +145,13 @@ export function flags(i: Inputs): Flag[] {
         out.push({
           id: `shrinking-${a}`,
           severity: 'yellow',
-          title: 'Mensajes cada vez más cortos',
+          title: tr({ es: 'Mensajes cada vez más cortos', en: 'Messages getting shorter' }),
           who: a,
-          detail: `${P(a)} ha pasado de ${e.toFixed(1).replace('.', ',')} a ${l.toFixed(1).replace('.', ',')} palabras por mensaje entre el principio y el final del chat.`,
-          metric: `−${Math.round(((e - l) / e) * 100)} % de longitud`,
+          detail: tr({
+            es: `${P(a)} ha pasado de ${dec1(e)} a ${dec1(l)} palabras por mensaje entre el principio y el final del chat.`,
+            en: `${P(a)} went from ${dec1(e)} to ${dec1(l)} words per message between the start and the end of the chat.`,
+          }),
+          metric: tr({ es: `−${Math.round(((e - l) / e) * 100)} % de longitud`, en: `−${Math.round(((e - l) / e) * 100)}% length` }),
           evidence: [excerpt(longEarly, 160), ...shortLate.map((m) => excerpt(m))],
         });
       }
@@ -159,12 +172,20 @@ export function flags(i: Inputs): Flag[] {
       out.push({
         id: `late-${a}`,
         severity: romantic && i.relation !== 'pareja' ? 'red' : 'yellow',
-        title: romantic ? 'Mucha actividad de madrugada' : 'Conversaciones a deshoras',
+        title: romantic
+          ? tr({ es: 'Mucha actividad de madrugada', en: 'Lots of late-night activity' })
+          : tr({ es: 'Conversaciones a deshoras', en: 'Conversations at odd hours' }),
         who: a,
         detail: romantic
-          ? `${Math.round((late / total) * 100)} % de los mensajes de ${P(a)} son entre las 00:00 y las 06:00. Ojo con el patrón "solo me escribe de noche".`
-          : `${Math.round((late / total) * 100)} % de los mensajes de ${P(a)} son de madrugada.`,
-        metric: `${late} mensajes de madrugada`,
+          ? tr({
+              es: `${Math.round((late / total) * 100)} % de los mensajes de ${P(a)} son entre las 00:00 y las 06:00. Ojo con el patrón "solo me escribe de noche".`,
+              en: `${Math.round((late / total) * 100)}% of messages from ${P(a)} are between midnight and 6 am. Watch out for the "only texts me at night" pattern.`,
+            })
+          : tr({
+              es: `${Math.round((late / total) * 100)} % de los mensajes de ${P(a)} son de madrugada.`,
+              en: `${Math.round((late / total) * 100)}% of messages from ${P(a)} are sent in the small hours.`,
+            }),
+        metric: tr({ es: `${late} mensajes de madrugada`, en: `${late} late-night messages` }),
         evidence: ex,
       });
     }
@@ -182,9 +203,12 @@ export function flags(i: Inputs): Flag[] {
       out.push({
         id: `drop-${months[k].month}`,
         severity: 'yellow',
-        title: 'Bajón brusco de actividad',
+        title: tr({ es: 'Bajón brusco de actividad', en: 'Sudden drop in activity' }),
         who: null,
-        detail: `De ${prev} mensajes en un mes a ${cur} al mes siguiente (${months[k - 1].month} → ${months[k].month}). Algo cambió ahí.`,
+        detail: tr({
+          es: `De ${prev} mensajes en un mes a ${cur} al mes siguiente (${months[k - 1].month} → ${months[k].month}). Algo cambió ahí.`,
+          en: `From ${prev} messages in one month to ${cur} the next (${months[k - 1].month} → ${months[k].month}). Something changed there.`,
+        }),
         metric: `−${Math.round(((prev - cur) / prev) * 100)} %`,
         evidence: lastOfPrev.map((m) => excerpt(m)),
       });
@@ -199,10 +223,13 @@ export function flags(i: Inputs): Flag[] {
     out.push({
       id: 'seen',
       severity: Math.max(s0, s1) >= 3 * Math.max(1, Math.min(s0, s1)) ? 'red' : 'yellow',
-      title: 'Preguntas que se quedan sin respuesta',
+      title: tr({ es: 'Preguntas que se quedan sin respuesta', en: 'Questions left unanswered' }),
       who: seenTop,
-      detail: `${P(seenTop)} deja sin contestar más de ${ctx.opts.seenThresholdHours} h mensajes que pedían respuesta ${Math.max(s0, s1)} veces (frente a ${Math.min(s0, s1)}). Estimación: el export no incluye los "leídos".`,
-      metric: `${s0} vs ${s1} "vistos" estimados`,
+      detail: tr({
+        es: `${P(seenTop)} deja sin contestar más de ${ctx.opts.seenThresholdHours} h mensajes que pedían respuesta ${Math.max(s0, s1)} veces (frente a ${Math.min(s0, s1)}). Estimación: el export no incluye los "leídos".`,
+        en: `${P(seenTop)} leaves messages that needed an answer unanswered for over ${ctx.opts.seenThresholdHours} h, ${Math.max(s0, s1)} times (vs ${Math.min(s0, s1)}). An estimate: the export doesn’t include read receipts.`,
+      }),
+      metric: tr({ es: `${s0} vs ${s1} "vistos" estimados`, en: `${s0} vs ${s1} estimated "left on read"` }),
       evidence: i.seen.examples.filter((e) => e.sender === other(seenTop)).slice(0, 3).map((e) => e.message),
     });
   }
@@ -215,10 +242,13 @@ export function flags(i: Inputs): Flag[] {
     out.push({
       id: 'end-silence',
       severity: 'red',
-      title: 'El chat termina con una sola voz',
+      title: tr({ es: 'El chat termina con una sola voz', en: 'The chat ends with just one voice' }),
       who: other(sp),
-      detail: `${P(sp)} escribió ${endSilence.unansweredMessages} mensajes durante ${endSilence.days} días sin respuesta hasta el final del export. Es compatible con un bloqueo, con que dejó de contestar… o con que hablasteis por otro sitio. Es una inferencia, no un dato.`,
-      metric: `${endSilence.days} días sin respuesta`,
+      detail: tr({
+        es: `${P(sp)} escribió ${endSilence.unansweredMessages} mensajes durante ${endSilence.days} días sin respuesta hasta el final del export. Es compatible con un bloqueo, con que dejó de contestar… o con que hablasteis por otro sitio. Es una inferencia, no un dato.`,
+        en: `${P(sp)} wrote ${endSilence.unansweredMessages} messages over ${endSilence.days} days without a reply until the end of the export. It fits a block, someone who stopped replying… or you talking somewhere else. It’s an inference, not a fact.`,
+      }),
+      metric: tr({ es: `${endSilence.days} días sin respuesta`, en: `${endSilence.days} days without a reply` }),
       evidence: unanswered,
     });
   }
@@ -234,10 +264,13 @@ export function flags(i: Inputs): Flag[] {
     out.push({
       id: 'double-text',
       severity: 'yellow',
-      title: 'Doble (y triple) texting',
+      title: tr({ es: 'Doble (y triple) texting', en: 'Double (and triple) texting' }),
       who: bTop,
-      detail: `${P(bTop)} encadena 3 o más mensajes seguidos sin respuesta durante horas ${bursts[bTop].length} veces.`,
-      metric: `${bursts[0].length} vs ${bursts[1].length} ráfagas`,
+      detail: tr({
+        es: `${P(bTop)} encadena 3 o más mensajes seguidos sin respuesta durante horas ${bursts[bTop].length} veces.`,
+        en: `${P(bTop)} sends 3 or more messages in a row with no reply for hours, ${bursts[bTop].length} times.`,
+      }),
+      metric: tr({ es: `${bursts[0].length} vs ${bursts[1].length} ráfagas`, en: `${bursts[0].length} vs ${bursts[1].length} bursts` }),
       evidence: bursts[bTop].slice(-3),
     });
   }
@@ -249,10 +282,13 @@ export function flags(i: Inputs): Flag[] {
       out.push({
         id: `deleted-${a}`,
         severity: 'yellow',
-        title: 'Se borra mucho',
+        title: tr({ es: 'Se borra mucho', en: 'Lots of deleting' }),
         who: a,
-        detail: `${P(a)} eliminó ${del} mensajes (${Math.round((del / i.counts.messages[a]) * 100)} % de lo que envía). Puede ser perfeccionismo… o arrepentimiento.`,
-        metric: `${del} eliminados`,
+        detail: tr({
+          es: `${P(a)} eliminó ${del} mensajes (${Math.round((del / i.counts.messages[a]) * 100)} % de lo que envía). Puede ser perfeccionismo… o arrepentimiento.`,
+          en: `${P(a)} deleted ${del} messages (${Math.round((del / i.counts.messages[a]) * 100)}% of what they send). Could be perfectionism… or regret.`,
+        }),
+        metric: tr({ es: `${del} eliminados`, en: `${del} deleted` }),
         evidence: msgs.filter((m) => m.author === a && m.kind === 'deleted').slice(-2).map((m) => excerpt(m)),
       });
     }
@@ -263,10 +299,13 @@ export function flags(i: Inputs): Flag[] {
     out.push({
       id: 'streak',
       severity: 'green',
-      title: `Racha de ${i.timeline.longestStreakDays} días seguidos`,
+      title: tr({ es: `Racha de ${i.timeline.longestStreakDays} días seguidos`, en: `A ${i.timeline.longestStreakDays}-day streak` }),
       who: null,
-      detail: 'Hablasteis todos los días durante semanas. Eso no pasa por casualidad.',
-      metric: `${i.timeline.longestStreakDays} días`,
+      detail: tr({
+        es: 'Hablasteis todos los días durante semanas. Eso no pasa por casualidad.',
+        en: 'You talked every single day for weeks. That doesn’t happen by accident.',
+      }),
+      metric: tr({ es: `${i.timeline.longestStreakDays} días`, en: `${i.timeline.longestStreakDays} days` }),
       evidence: [],
     });
   }
@@ -278,10 +317,16 @@ export function flags(i: Inputs): Flag[] {
     out.push({
       id: 'curious',
       severity: 'green',
-      title: 'Os preguntáis cosas',
+      title: tr({ es: 'Os preguntáis cosas', en: 'You ask each other things' }),
       who: null,
-      detail: 'Los dos hacéis preguntas a menudo: hay curiosidad por la vida del otro.',
-      metric: `${Math.round(qRates[0] * 100)} % y ${Math.round(qRates[1] * 100)} % de mensajes con pregunta`,
+      detail: tr({
+        es: 'Los dos hacéis preguntas a menudo: hay curiosidad por la vida del otro.',
+        en: 'You both ask questions often: there’s real curiosity about each other’s lives.',
+      }),
+      metric: tr({
+        es: `${Math.round(qRates[0] * 100)} % y ${Math.round(qRates[1] * 100)} % de mensajes con pregunta`,
+        en: `${Math.round(qRates[0] * 100)}% and ${Math.round(qRates[1] * 100)}% of messages with a question`,
+      }),
       evidence: [],
     });
   }

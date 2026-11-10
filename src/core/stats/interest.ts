@@ -17,7 +17,8 @@
 import type { InterestComponent, InterestResult, Message, Pair } from '../types';
 import type { Ctx } from './context';
 import { clamp, extractEmojis, isQuestion, median, pair, wordCount } from './util';
-import { formatDuration } from '../format';
+import { dec1, formatDuration } from '../format';
+import { tr } from '../i18n';
 
 interface Raw {
   medianReply: Pair<number | null>;
@@ -69,61 +70,65 @@ const speedScore = (ms: number | null) => {
 };
 const shareScore = (s: number) => clamp(s * 150);
 
-const pct = (x: number) => `${Math.round(x * 100)} %`;
+const pct = (x: number) => tr({ es: `${Math.round(x * 100)} %`, en: `${Math.round(x * 100)}%` });
 
 function components(raw: Raw, trend: Pair<number> | null): InterestComponent[] {
   const list: InterestComponent[] = [
     {
       key: 'speed',
-      label: 'Rapidez al responder',
+      label: tr({ es: 'Rapidez al responder', en: 'Reply speed' }),
       weight: 0.25,
       scores: raw.medianReply.map(speedScore) as Pair<number>,
-      raw: raw.medianReply.map((m) => (m === null ? 'sin datos' : `mediana ${formatDuration(m)}`)) as Pair<string>,
+      raw: raw.medianReply.map((m) =>
+        m === null ? tr({ es: 'sin datos', en: 'no data' }) : tr({ es: `mediana ${formatDuration(m)}`, en: `median ${formatDuration(m)}` }),
+      ) as Pair<string>,
     },
     {
       key: 'initiative',
-      label: 'Iniciativa',
+      label: tr({ es: 'Iniciativa', en: 'Initiative' }),
       weight: 0.2,
       scores: raw.initShare.map(shareScore) as Pair<number>,
-      raw: raw.initShare.map((s) => `${pct(s)} de los inicios`) as Pair<string>,
+      raw: raw.initShare.map((s) => tr({ es: `${pct(s)} de los inicios`, en: `${pct(s)} of starts` })) as Pair<string>,
     },
     {
       key: 'length',
-      label: 'Longitud de mensajes',
+      label: tr({ es: 'Longitud de mensajes', en: 'Message length' }),
       weight: 0.15,
       scores: raw.avgWords.map((w) => clamp((w / 12) * 100)) as Pair<number>,
-      raw: raw.avgWords.map((w) => `${w.toFixed(1)} palabras/mensaje`) as Pair<string>,
+      raw: raw.avgWords.map((w) => tr({ es: `${dec1(w)} palabras/mensaje`, en: `${dec1(w)} words/message` })) as Pair<string>,
     },
     {
       key: 'questions',
-      label: 'Preguntas',
+      label: tr({ es: 'Preguntas', en: 'Questions' }),
       weight: 0.15,
       scores: raw.qRate.map((r) => clamp((r / 0.25) * 100)) as Pair<number>,
-      raw: raw.qRate.map((r) => `${pct(r)} de mensajes con pregunta`) as Pair<string>,
+      raw: raw.qRate.map((r) => tr({ es: `${pct(r)} de mensajes con pregunta`, en: `${pct(r)} of messages with a question` })) as Pair<string>,
     },
     {
       key: 'effort',
-      label: 'Volumen',
+      label: tr({ es: 'Volumen', en: 'Volume' }),
       weight: 0.1,
       scores: raw.volShare.map(shareScore) as Pair<number>,
-      raw: raw.volShare.map((s) => `${pct(s)} de los mensajes`) as Pair<string>,
+      raw: raw.volShare.map((s) => tr({ es: `${pct(s)} de los mensajes`, en: `${pct(s)} of messages` })) as Pair<string>,
     },
     {
       key: 'emojis',
       label: 'Emojis',
       weight: 0.05,
       scores: raw.emojiRate.map((r) => clamp((r / 0.5) * 100)) as Pair<number>,
-      raw: raw.emojiRate.map((r) => `${r.toFixed(2)} por mensaje`) as Pair<string>,
+      raw: raw.emojiRate.map((r) => tr({ es: `${dec1(r)} por mensaje`, en: `${dec1(r)} per message` })) as Pair<string>,
     },
   ];
   if (trend) {
     list.push({
       key: 'trend',
-      label: 'Evolución reciente',
+      label: tr({ es: 'Evolución reciente', en: 'Recent trend' }),
       weight: 0.1,
       // 50 = estable; sube si al final escribe proporcionalmente más que de media.
       scores: trend.map((d) => clamp(50 + d * 250)) as Pair<number>,
-      raw: trend.map((d) => `${d >= 0 ? '+' : ''}${Math.round(d * 100)} pts de cuota al final`) as Pair<string>,
+      raw: trend.map((d) =>
+        tr({ es: `${d >= 0 ? '+' : ''}${Math.round(d * 100)} pts de cuota al final`, en: `${d >= 0 ? '+' : ''}${Math.round(d * 100)} pts of share at the end` }),
+      ) as Pair<string>,
     });
   }
   return list;

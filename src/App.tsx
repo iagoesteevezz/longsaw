@@ -15,29 +15,33 @@ import { SetupPage } from './pages/SetupPage';
 import { LoadingPage } from './pages/LoadingPage';
 import { ReportPage } from './pages/ReportPage';
 import { PrivacyPage } from './pages/PrivacyPage';
+import { useI18n } from './lib/i18n';
 
 type Stage =
   | { name: 'upload' }
   | { name: 'loading'; step: number; pct: number }
   | { name: 'setup'; summary: ChatSummary }
-  | { name: 'report'; report: Report; options: AnalysisOptions };
+  // live: el chat de este informe sigue en el worker (se puede regenerar).
+  | { name: 'report'; report: Report; options: AnalysisOptions; live: boolean };
 
 const STEP_INDEX: Record<ProgressStep, number> = { read: 0, stats: 2, patterns: 3, report: 3 };
 /** Tiempo mínimo de la pantalla de carga: que los pasos se lean, sin hacer esperar de más. */
 const MIN_LOADING_MS = 1100;
 const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
-const ERRORS: Record<string, string> = {
-  GROUP: 'Parece un chat de grupo. De momento solo analizamos chats entre dos personas.',
-  NO_TXT_IN_ZIP: 'El .zip no contiene el .txt del chat. Vuelve a exportarlo desde WhatsApp.',
-  NOT_WHATSAPP: 'No reconocemos el archivo como un chat de WhatsApp. Exporta el chat desde WhatsApp → Más → Exportar chat.',
-  EMPTY: 'El chat no tiene mensajes de personas.',
+const ERROR_CODES = ['GROUP', 'NO_TXT_IN_ZIP', 'NOT_WHATSAPP', 'EMPTY'] as const;
+type ErrorCode = (typeof ERROR_CODES)[number] | 'generic';
+const errorCode = (e: unknown): ErrorCode => {
+  const c = (e as { code?: string }).code;
+  return ERROR_CODES.find((x) => x === c) ?? 'generic';
 };
 
 export default function App() {
   const [route, setRoute] = useState(location.hash);
   const [stage, setStage] = useState<Stage>({ name: 'upload' });
-  const [error, setError] = useState<string | null>(null);
+  const { lang, t } = useI18n();
+  const [error, setError] = useState<ErrorCode | null>(null);
+  const [translating, setTranslating] = useState(false);
   const [saved, setSaved] = useState<Saved | null>(() => loadSaved());
   const worker = useRef<AnalysisWorker | null>(null);
 
@@ -70,7 +74,7 @@ export default function App() {
     } catch (e) {
       worker.current?.destroy();
       worker.current = null;
-      setError(ERRORS[(e as { code?: string }).code ?? ''] ?? (e as Error).message);
+      setError(errorCode(e));
       setStage({ name: 'upload' });
     }
   };
@@ -82,16 +86,33 @@ export default function App() {
       const report = await worker.current!.analyze(options);
       setStage({ name: 'loading', step: 4, pct: 100 });
       await wait(Math.max(250, MIN_LOADING_MS - (performance.now() - t0)));
-      setStage({ name: 'report', report, options });
+      setStage({ name: 'report', report, options, live: true });
       scrollTo(0, 0);
     } catch (e) {
-      setError((e as Error).message);
+      setError(errorCode(e));
       setStage({ name: 'upload' });
     }
   };
 
+  // Cambio de idioma con el informe abierto: se regenera en segundo plano
+  // (el chat sigue en el worker). Un informe guardado ya no tiene worker.
+  useEffect(() => {
+    if (stage.name !== 'report' || !stage.live || (stage.options.lang ?? 'es') === lang || !worker.current) return;
+    let alive = true;
+    const options = { ...stage.options, lang };
+    setTranslating(true);
+    worker.current
+      .analyze(options)
+      .then((report) => alive && setStage({ name: 'report', report, options, live: true }))
+      .catch(() => {})
+      .finally(() => alive && setTranslating(false));
+    return () => {
+      alive = false;
+    };
+  }, [lang, stage]);
+
   const onDemo = () => {
-    const bytes = new TextEncoder().encode(generateDemoChat());
+    const bytes = new TextEncoder().encode(generateDemoChat(42, lang));
     onFile(bytes.buffer as ArrayBuffer);
   };
 
@@ -115,11 +136,11 @@ export default function App() {
         <UploadPage
           onFile={onFile}
           onDemo={onDemo}
-          error={error}
+          error={error && t.errors[error]}
           saved={saved}
           onOpenSaved={() => {
             if (!saved) return;
-            setStage({ name: 'report', report: saved.report, options: saved.options });
+            setStage({ name: 'report', report: saved.report, options: saved.options, live: false });
           }}
         />
       )}
@@ -129,6 +150,8 @@ export default function App() {
         <ReportPage
           report={stage.report}
           options={stage.options}
+          translating={translating}
+          canTranslate={stage.live}
           onWipe={wipe}
           onNew={() => setStage({ name: 'upload' })}
           onSave={() => {

@@ -13,7 +13,8 @@
  * Reglas de redacción: tercera persona y SIN adjetivos con género sobre las
  * personas ("{A} es rápido" no vale si {A} es Marta). Humor sí; diagnósticos no.
  */
-import { formatDate, formatDuration, formatMonth, nf } from '../format';
+import { dec1, formatDate, formatDuration, formatMonth, nf } from '../format';
+import { tr } from '../i18n';
 import type { AuthorIndex, CaptionKey, Pair, Relation, Report } from '../types';
 
 export interface Facts {
@@ -50,8 +51,12 @@ export type NoticedKey =
 
 const n = (x: number) => nf.format(Math.round(x));
 const pctOf = (a: number, b: number) => Math.round((a / Math.max(1, a + b)) * 100);
-const ratio = (x: number) => (x >= 10 ? n(x) : x.toFixed(1).replace('.', ',').replace(',0', ''));
-const DAYS = ['lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábados', 'domingos'];
+const ratio = (x: number) => (x >= 10 ? n(x) : dec1(x));
+const DAYS = {
+  es: ['lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábados', 'domingos'],
+  en: ['Mondays', 'Tuesdays', 'Wednesdays', 'Thursdays', 'Fridays', 'Saturdays', 'Sundays'],
+};
+const day = (i: number) => tr(DAYS)[i];
 
 /** Quién va por delante en un par de números (empate → persona 0). */
 function lead(p: Pair<number>) {
@@ -818,7 +823,7 @@ export const NOTICED: Record<NoticedKey, Situation[]> = {
       id: 'weekday',
       when: ({ r }) => {
         const w = r.timeline.weekdays[0].map((x, i) => x + r.timeline.weekdays[1][i]);
-        return sum(w) >= 30 && { d: DAYS[w.indexOf(Math.max(...w))] };
+        return sum(w) >= 30 && { d: day(w.indexOf(Math.max(...w))) };
       },
       lines: [
         'Vuestro día favorito para hablar: los {d}.',
@@ -832,7 +837,7 @@ export const NOTICED: Record<NoticedKey, Situation[]> = {
       id: 'weekdayQuiet',
       when: ({ r }) => {
         const w = r.timeline.weekdays[0].map((x, i) => x + r.timeline.weekdays[1][i]);
-        return sum(w) >= 100 && { d: DAYS[w.indexOf(Math.min(...w))] };
+        return sum(w) >= 100 && { d: day(w.indexOf(Math.min(...w))) };
       },
       lines: ['Los {d} el chat se queda más tranquilo.', 'Día más flojo: los {d}. Descanso semanal.'],
     },

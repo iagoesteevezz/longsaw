@@ -6,6 +6,7 @@ import '@fontsource-variable/bricolage-grotesque';
 import '@fontsource-variable/fredoka/wght.css';
 import './index.css';
 import App from './App';
+import { LangProvider } from './lib/i18n';
 
 // Las animaciones de entrada solo ocultan contenido si hay JS y el usuario no
 // pidió menos movimiento: sin esta clase todo se ve en su estado final.
@@ -16,6 +17,8 @@ reduce?.addEventListener?.('change', syncMotion);
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <App />
+    <LangProvider>
+      <App />
+    </LangProvider>
   </StrictMode>,
 );

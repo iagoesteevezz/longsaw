@@ -29,6 +29,7 @@ import type {
   MediaType,
   Message,
   MessageKind,
+  ParseWarning,
   ParsedChat,
   Platform,
 } from './types';
@@ -300,13 +301,13 @@ export function parseWhatsApp(input: string): ParsedChat {
     );
   }
 
-  const warnings: string[] = [];
+  const warnings: ParseWarning[] = [];
   const names = senders.slice(0, 2).map(([n]) => n);
   if (names.length === 1) {
-    warnings.push('Solo una persona ha escrito en este chat: muchas comparaciones no aplican.');
+    warnings.push({ code: 'single' });
   }
-  if (orphanLines > 0) warnings.push(`Se ignoraron ${orphanLines} líneas antes del primer mensaje.`);
-  if (senders.length > 2) warnings.push('Se trataron como aviso del sistema algunas líneas con formato raro.');
+  if (orphanLines > 0) warnings.push({ code: 'orphans', n: orphanLines });
+  if (senders.length > 2) warnings.push({ code: 'oddLines' });
 
   // ---- Construir mensajes finales ----
   const messages: Message[] = [];
@@ -333,7 +334,7 @@ export function parseWhatsApp(input: string): ParsedChat {
     });
   }
   if (outOfOrder > messages.length * 0.02) {
-    warnings.push('Algunas fechas no están en orden; revisa que el archivo no esté mezclado.');
+    warnings.push({ code: 'unordered' });
   }
 
   // Chat de una sola persona: añadimos un participante vacío para que todo el

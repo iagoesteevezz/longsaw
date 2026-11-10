@@ -44,11 +44,11 @@ function dataUrlToBlob(dataUrl: string): Blob {
 }
 
 /** Comparte con la hoja nativa del móvil si existe; si no, descarga. */
-export async function shareOrDownload(dataUrl: string, filename: string) {
+export async function shareOrDownload(dataUrl: string, filename: string, title: string) {
   try {
     const file = new File([dataUrlToBlob(dataUrl)], filename, { type: 'image/png' });
     if (navigator.canShare?.({ files: [file] })) {
-      await navigator.share({ files: [file], title: 'Mi informe de Longsaw' });
+      await navigator.share({ files: [file], title });
       return;
     }
   } catch (e) {
@@ -63,6 +63,8 @@ export interface PdfCover {
   stats: [label: string, value: string][];
   split: { label: string; names: [string, string]; values: [number, number] };
   highlights: string[];
+  /** Textos fijos de la portada en el idioma de la interfaz. */
+  labels: { kicker: string; noticed: string; footer: string; file: string; pct: (n: number) => string };
 }
 
 // Identidad: verdes de WhatsApp sobre crema.
@@ -142,7 +144,7 @@ function drawCover(pdf: Pdf, cover: PdfCover, brand: { url: string; ratio: numbe
   }
   pdf.setFont('helvetica', 'normal');
   pdf.setFontSize(10);
-  pdf.text('INFORME DE CHAT', M, 31);
+  pdf.text(cover.labels.kicker, M, 31);
 
   pdf.setFont('helvetica', 'bold');
   pdf.setFontSize(38);
@@ -186,14 +188,14 @@ function drawCover(pdf: Pdf, cover: PdfCover, brand: { url: string; ratio: numbe
   if (share0 > 0.05 && share0 < 0.95) pdf.rect(M + barW * share0 - 4.5, sy + 4, 4.5, 9, 'F');
   pdf.setFont('helvetica', 'normal');
   pdf.setFontSize(10);
-  pdf.text(`${pdfText(cover.split.names[0])} · ${Math.round(share0 * 100)} %`, M, sy + 20);
-  pdf.text(`${100 - Math.round(share0 * 100)} % · ${pdfText(cover.split.names[1])}`, W - M, sy + 20, { align: 'right' });
+  pdf.text(`${pdfText(cover.split.names[0])} · ${cover.labels.pct(Math.round(share0 * 100))}`, M, sy + 20);
+  pdf.text(`${cover.labels.pct(100 - Math.round(share0 * 100))} · ${pdfText(cover.split.names[1])}`, W - M, sy + 20, { align: 'right' });
 
   // Lo más destacado: frases del informe en burbujas.
   let y = sy + 36;
   pdf.setFont('helvetica', 'bold');
   pdf.setFontSize(11);
-  pdf.text('Lo que notamos', M, y);
+  pdf.text(cover.labels.noticed, M, y);
   y += 5;
   pdf.setFont('helvetica', 'normal');
   for (const h of cover.highlights) {
@@ -211,7 +213,7 @@ function drawCover(pdf: Pdf, cover: PdfCover, brand: { url: string; ratio: numbe
   ink(C.teal);
   pdf.setFontSize(8.5);
   pdf.text(
-    'Generado en tu navegador: el chat no se ha subido a ningún sitio. Las lecturas son entretenimiento, no un diagnóstico.',
+    cover.labels.footer,
     M,
     H - 12,
     { maxWidth: W - 2 * M },
@@ -248,7 +250,7 @@ export async function exportPdf(nodes: HTMLElement[], cover: PdfCover) {
     }
     pdf.addImage(images[i].png, 'PNG', b.x, b.y, b.w, b.h, undefined, 'FAST');
   });
-  pdf.save('longsaw-informe.pdf');
+  pdf.save(cover.labels.file);
 }
 
 function loadImage(src: string): Promise<HTMLImageElement> {

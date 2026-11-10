@@ -10,6 +10,11 @@
  */
 import type { AuthorIndex, CaptionKey, Relation, Report } from '../types';
 import { CAPTIONS, NOTICED, type Facts, type NoticedKey, type Situation, type Vars } from './bank';
+import { EN_LINES } from './bank.en';
+import { coreLang } from '../i18n';
+
+/** Redacciones de la situación en el idioma actual (la lógica de `when` es común). */
+const linesOf = (s: Situation) => (coreLang() === 'en' ? (EN_LINES[s.id] ?? s.lines) : s.lines);
 
 /** PRNG pequeño y con semilla (mulberry32). */
 export function rng(seed: number) {
@@ -54,7 +59,7 @@ export function writeCopy(r: Report, opts: { me: AuthorIndex; relation: Relation
         vars = null; // datos incompletos (chat de una sola persona, etc.): la situación no aplica
       }
       if (!vars) continue;
-      const free = s.lines.filter((l) => !used.has(l));
+      const free = linesOf(s).filter((l) => !used.has(l));
       if (free.length === 0) continue;
       const line = free[Math.floor(rand() * free.length)];
       used.add(line);

@@ -133,5 +133,6 @@ describe('integración con el chat de demo', () => {
     analyze(c, opts());
     // Los runners de CI compartidos son más lentos e irregulares que un portátil.
     expect(performance.now() - t0).toBeLessThan(process.env.CI ? 8000 : 3000);
-  });
+    // Vitest corta cada test a los 5 s por defecto: sin esto, en CI nunca llega al expect.
+  }, 20_000);
 });

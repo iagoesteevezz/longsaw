@@ -12,6 +12,7 @@
  *   `new Date(y, m, d, h, min)`). El export de WhatsApp no trae zona horaria;
  *   interpretarlo como local es lo que espera el usuario ("me escribe a las 3 am").
  */
+import type { Lang } from './i18n';
 
 /** Tipo de mensaje tras clasificar el texto. */
 export type MessageKind =
@@ -59,6 +60,9 @@ export type Platform = 'ios' | 'android' | 'unknown';
 export type DateOrder = 'DMY' | 'MDY' | 'YMD';
 export type LocaleCode = 'es' | 'en';
 
+/** Avisos del parser como códigos (no texto): la UI los muestra en su idioma. */
+export type ParseWarning = { code: 'single' } | { code: 'orphans'; n: number } | { code: 'oddLines' } | { code: 'unordered' };
+
 export interface ParsedChat {
   participants: Participant[]; // longitud 1 o 2 (los grupos se rechazan)
   messages: Message[];
@@ -67,8 +71,8 @@ export interface ParsedChat {
   dateOrder: DateOrder;
   /** Índice del participante que exportó el chat, si se pudo deducir. */
   exporterGuess: AuthorIndex | null;
-  /** Avisos no fatales (líneas descartadas, fecha ambigua, etc.). */
-  warnings: string[];
+  /** Avisos no fatales (líneas descartadas, fechas desordenadas…). La UI los traduce. */
+  warnings: ParseWarning[];
 }
 
 /* ------------------------------------------------------------------ */
@@ -92,6 +96,8 @@ export interface AnalysisOptions {
   otherAlias: string;
   /** Nombre del usuario cuando el export lo trae como "Tú"/"You". */
   myAlias?: string;
+  /** Idioma de los textos del informe (por defecto, español). */
+  lang?: Lang;
   /** Silencio a partir del cual empieza una "nueva conversación". */
   sessionGapHours: number;
   /** Horas sin respuesta para considerar "visto" (estimación). */
@@ -246,7 +252,7 @@ export interface Report {
     firstTs: number;
     lastTs: number;
     durationDays: number;
-    warnings: string[];
+    warnings: ParseWarning[];
   };
   counts: {
     messages: Pair<number>;

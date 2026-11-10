@@ -9,25 +9,25 @@
  * llevan el doble tick azul.
  */
 import { Ticks } from '../components/ChatToChart';
-
-export const LOADING_STEPS = ['Leyendo archivo', 'Anonimizando', 'Calculando estadísticas', 'Generando informe'];
+import { useT } from '../lib/i18n';
 
 export function LoadingPage({ step, pct }: { step: number; pct: number }) {
+  const l = useT().loading;
   return (
     <main className="wa-gradient relative flex min-h-dvh flex-col justify-center overflow-hidden px-5 text-white" aria-live="polite" aria-busy="true">
       <span aria-hidden className="pointer-events-none absolute -right-10 top-10 text-[12rem] leading-none opacity-10">💬</span>
       <div className="mx-auto w-full max-w-md">
-        <p className="text-sm font-bold uppercase tracking-widest text-white/70">Un momento</p>
+        <p className="text-sm font-bold uppercase tracking-widest text-white/70">{l.kicker}</p>
         <h1 className="mt-3 text-balance text-5xl font-extrabold leading-[0.95] tracking-[-0.03em]">
-          Leyendo <span className="inline-block -rotate-2 rounded-2xl bg-wa-green px-2 text-wa-ink">vuestro chat</span>…
+          {l.h1[0]} <span className="inline-block -rotate-2 rounded-2xl bg-wa-green px-2 text-wa-ink">{l.h1[1]}</span>…
         </h1>
 
-        <div className="mt-8 h-2.5 overflow-hidden rounded-full bg-white/15" role="progressbar" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100} aria-label="Progreso del análisis">
+        <div className="mt-8 h-2.5 overflow-hidden rounded-full bg-white/15" role="progressbar" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100} aria-label={l.progress}>
           <div className="h-full rounded-full bg-wa-green transition-[width] duration-500 ease-out" style={{ width: `${pct}%` }} />
         </div>
 
         <ol className="phone-screen mt-6 flex min-h-[15.5rem] flex-col gap-2 rounded-[1.75rem] p-4 shadow-[0_30px_60px_-30px_rgb(0_0_0/0.6)]">
-          {LOADING_STEPS.map((s, i) => {
+          {l.steps.map((s, i) => {
             if (i > step) return null;
             if (i === step) {
               return (
@@ -41,7 +41,7 @@ export function LoadingPage({ step, pct }: { step: number; pct: number }) {
               <li key={s} className="msg me !max-w-[85%] text-base font-bold">
                 <span className="body">{s}</span>
                 <span className="meta">
-                  listo <Ticks read />
+                  {l.done} <Ticks read />
                 </span>
               </li>
             );
@@ -49,7 +49,7 @@ export function LoadingPage({ step, pct }: { step: number; pct: number }) {
         </ol>
 
         <p className="mt-6 flex items-center gap-2 text-sm font-semibold text-white/75">
-          <span aria-hidden className="text-wa-green">🔒</span> Nada de esto sale de tu navegador.
+          <span aria-hidden className="text-wa-green">🔒</span> {l.privacy}
         </p>
       </div>
     </main>

@@ -1,8 +1,10 @@
 import { useTheme } from '../lib/theme';
+import { useT } from '../lib/i18n';
 
 /** Botón sol/luna. `glass` para fondos verdes (portada, cabeceras); `solid` sobre el papel. */
 export function ThemeToggle({ variant = 'glass' }: { variant?: 'glass' | 'solid' }) {
   const { theme, toggle } = useTheme();
+  const t = useT();
   const dark = theme === 'dark';
   const look =
     variant === 'glass'
@@ -12,8 +14,8 @@ export function ThemeToggle({ variant = 'glass' }: { variant?: 'glass' | 'solid'
     <button
       type="button"
       onClick={toggle}
-      aria-label={dark ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}
-      title={dark ? 'Modo claro' : 'Modo oscuro'}
+      aria-label={dark ? t.common.toLight : t.common.toDark}
+      title={dark ? t.common.lightTitle : t.common.darkTitle}
       className={`press grid h-9 w-9 shrink-0 place-items-center rounded-full ${look}`}
     >
       {dark ? (

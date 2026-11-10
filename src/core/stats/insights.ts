@@ -10,7 +10,8 @@
 import type { AuthorIndex, Flag, InterestResult, Pair, Relation, Report } from '../types';
 import type { Ctx } from './context';
 import { other } from './util';
-import { formatDuration } from '../format';
+import { dec1, formatDuration } from '../format';
+import { tr } from '../i18n';
 
 type Style = Report['insights']['styles'][number];
 type Situation = 'balanced' | 'meMore' | 'otherMore' | 'cold' | 'ended';
@@ -55,26 +56,89 @@ function styleFor(a: AuthorIndex, i: Inputs): Style {
     Number(avgWords < 4);
   const intense = Number(volShare > 0.62) + Number(avgWords > 14) + Number(lateShare > 0.2);
 
-  const traits = [
-    `Responde en una mediana de ${formatDuration(med)}.`,
-    `Empieza ${Math.round(initShare * 100)} % de las conversaciones.`,
-    `${avgWords.toFixed(1).replace('.', ',')} palabras por mensaje de media.`,
-  ];
-  const att = (s: string) => (romantic ? ` Recuerda a lo que la teoría del apego llama ${s}, pero es solo una lectura de cómo escribe, no un diagnóstico.` : '');
+  const traits = tr({
+    es: [
+      `Responde en una mediana de ${formatDuration(med)}.`,
+      `Empieza ${Math.round(initShare * 100)} % de las conversaciones.`,
+      `${dec1(avgWords)} palabras por mensaje de media.`,
+    ],
+    en: [
+      `Replies in a median of ${formatDuration(med)}.`,
+      `Starts ${Math.round(initShare * 100)}% of conversations.`,
+      `${dec1(avgWords)} words per message on average.`,
+    ],
+  });
+  const att = (s: { es: string; en: string }) =>
+    romantic
+      ? tr({
+          es: ` Recuerda a lo que la teoría del apego llama ${s.es}, pero es solo una lectura de cómo escribe, no un diagnóstico.`,
+          en: ` It resembles what attachment theory calls ${s.en}, but it’s only a reading of how they text, not a diagnosis.`,
+        })
+      : '';
 
   if (chaser >= 2 && chaser >= distant) {
-    return { label: 'Va con todo', emoji: '🏃', traits: [...traits, `Tira del hilo y busca respuesta.${att('“ansioso”')}`] };
+    const note = att({ es: '“ansioso”', en: '“anxious”' });
+    return { label: tr({ es: 'Va con todo', en: 'All in' }), emoji: '🏃', traits: [...traits, tr({ es: `Tira del hilo y busca respuesta.${note}`, en: `Keeps the thread going and looks for a reply.${note}` })] };
   }
   if (distant >= 2) {
-    return { label: 'Va a su ritmo', emoji: '🧊', traits: [...traits, `Mantiene cierta distancia y marca los tiempos.${att('“evitativo”')}`] };
+    const note = att({ es: '“evitativo”', en: '“avoidant”' });
+    return { label: tr({ es: 'Va a su ritmo', en: 'Own pace' }), emoji: '🧊', traits: [...traits, tr({ es: `Mantiene cierta distancia y marca los tiempos.${note}`, en: `Keeps some distance and sets the pace.${note}` })] };
   }
   if (intense >= 2) {
-    return { label: 'Intensidad máxima', emoji: '🔥', traits: [...traits, 'Escribe mucho, largo y a cualquier hora.'] };
+    return { label: tr({ es: 'Intensidad máxima', en: 'Maximum intensity' }), emoji: '🔥', traits: [...traits, tr({ es: 'Escribe mucho, largo y a cualquier hora.', en: 'Writes a lot, at length and at any hour.' })] };
   }
-  return { label: 'Tranqui y presente', emoji: '🌿', traits: [...traits, `Ritmo constante, sin extremos.${att('“seguro”')}`] };
+  const note = att({ es: '“seguro”', en: '“secure”' });
+  return { label: tr({ es: 'Tranqui y presente', en: 'Calm and present' }), emoji: '🌿', traits: [...traits, tr({ es: `Ritmo constante, sin extremos.${note}`, en: `A steady rhythm, no extremes.${note}` })] };
 }
 
-const MOVES: Record<Group, Record<Situation, { title: string; steps: string[] }>> = {
+type Moves = Record<Group, Record<Situation, { title: string; steps: string[] }>>;
+
+const MOVES_EN: Moves = {
+  pareja: {
+    balanced: { title: 'Look after what works', steps: ['Keep the rhythm: it’s balanced.', 'Bring up a new topic from your “shared language”.', 'Plan something away from your phones this week.'] },
+    meMore: { title: 'Talk about it, not over WhatsApp', steps: ['The numbers say you pull more. Mention it in person, without blame.', 'Ask how {o} sees it: sometimes it’s just style.', 'Don’t make up for it by writing even more.'] },
+    otherMore: { title: 'Give back some of what you get', steps: ['{o} puts more energy into the chat than you.', 'Take the initiative a couple of times this week.', 'Answer their questions with questions.'] },
+    cold: { title: 'Reconnect', steps: ['The chat is colder than it used to be.', 'Suggest a concrete plan (day and time).', 'Talk face to face about how you’re doing.'] },
+    ended: { title: 'Before writing again, ask in person', steps: ['The chat ends without a reply.', 'If you can see each other, talk it through in person.', 'Don’t send more messages in a row.'] },
+  },
+  ligue: {
+    balanced: { title: 'Move to the plan', steps: ['There’s interest on both sides.', 'Suggest something concrete: day, time and place.', 'Don’t drag out the endless chat: phones cool things down.'] },
+    meMore: { title: 'Slow down', steps: ['Your interest is ahead of {o}’s.', 'Let {o} open the next conversation.', 'If that doesn’t happen within a week, you have your answer.'] },
+    otherMore: { title: 'Decide if you’re interested', steps: ['{o} is keener than you.', 'If you like them, show it with a plan.', 'If not, be clear and kind: don’t leave them on read.'] },
+    cold: { title: 'One last try (or none)', steps: ['Neither of you is pushing much.', 'One message with a concrete, low-key plan.', 'If there’s no keen reply, let it go.'] },
+    ended: { title: 'Accept the silence', steps: ['The chat ends with unanswered messages.', 'Don’t insist: silence is an answer too.', 'Mute the chat and focus on yourself.'] },
+  },
+  ex: {
+    balanced: { title: 'Ask yourself what it’s for', steps: ['You still talk in a fairly balanced way.', 'Does it help, or keep a door open that hurts?', 'If it’s real friendship, set clear boundaries.'] },
+    meMore: { title: 'Protect your peace', steps: ['You seek contact more than {o} does.', 'Try a few weeks without writing first.', 'Notice how you feel when you’re not waiting for a reply.'] },
+    otherMore: { title: 'Set clear boundaries', steps: ['{o} seeks contact more than you do.', 'If you don’t want to get back together, say so clearly.', 'Half-hearted replies drag out the confusion.'] },
+    cold: { title: 'Close the chapter', steps: ['The conversation has faded on its own.', 'No need for an epic goodbye message.', 'Archive the chat: don’t delete it in the heat of the moment.'] },
+    ended: { title: 'Don’t send that message (yet)', steps: ['The chat ends with a single voice.', 'Write what you’d want to say… in your notes, not on WhatsApp.', 'If you still want to send it in 48 h, talk it over with someone you trust.'] },
+  },
+  amistad: {
+    balanced: { title: 'A friendship in good shape', steps: ['You write to each other evenly.', 'Turn a “we should meet up” into a date.', 'Send them that meme that reminded you of {o}.'] },
+    meMore: { title: 'Ask how they’re doing', steps: ['You’ve been carrying the chat lately.', '{o} might be going through a busy patch.', 'A sincere “all good?” is worth more than ten memes.'] },
+    otherMore: { title: 'Return the call', steps: ['{o} reaches out to you more than you do.', 'Write first this week.', 'Suggest a plan, even just a coffee.'] },
+    cold: { title: 'Rekindle the friendship', steps: ['The chat has slowed down.', 'A 30-second voice note breaks the ice better than text.', 'A small, concrete plan.'] },
+    ended: { title: 'A no-pressure message', steps: ['The conversation was cut short.', 'A “thought of you” without demanding a reply.', 'If they don’t answer, don’t take it personally.'] },
+  },
+  familia: {
+    balanced: { title: 'A well-connected family', steps: ['You keep each other up to date evenly.', 'A call now and then goes a long way.', 'Share a photo from your day.'] },
+    meMore: { title: 'Switch channels', steps: ['You write more than {o}.', 'Maybe {o} prefers calls to messages.', 'Try a short call.'] },
+    otherMore: { title: 'A little more of you', steps: ['{o} writes to you more than you reply.', 'Answer, even with a short voice note.', 'Ask about their things.'] },
+    cold: { title: 'Break the family silence', steps: ['The chat is very quiet.', 'A call for no reason.', 'Suggest a meal together.'] },
+    ended: { title: 'Take the first step', steps: ['The conversation was left hanging.', 'A short, warm message.', 'If there was friction, better to talk in person.'] },
+  },
+  trabajo: {
+    balanced: { title: 'Efficient communication', steps: ['Reply times are balanced.', 'Group topics into a single message.', 'Respect out-of-hours time.'] },
+    meMore: { title: 'Fewer, clearer messages', steps: ['You write more than {o}.', 'Sum up in one message what you need and by when.', 'For long topics, a call works better.'] },
+    otherMore: { title: 'Reply with clear timings', steps: ['{o} writes to you more.', 'If you can’t answer, say so: “I’ll get back to you tomorrow”.', 'Suggest a better channel if things pile up.'] },
+    cold: { title: 'All in order', steps: ['Little activity: normal between colleagues.', 'Nothing to do.', ''] },
+    ended: { title: 'Close pending topics', steps: ['Something was left unanswered.', 'Pick it up with a concrete message.', 'If there’s no reply, try email.'] },
+  },
+};
+
+const MOVES_ES: Moves = {
   pareja: {
     balanced: { title: 'Cuidad lo que funciona', steps: ['Mantened el ritmo: está equilibrado.', 'Saca algún tema nuevo de los que salen en “vuestro idioma”.', 'Proponed un plan fuera del móvil esta semana.'] },
     meMore: { title: 'Habla de ello, no por WhatsApp', steps: ['Los números dicen que tú tiras más. Coméntalo en persona, sin reproches.', 'Pregunta cómo lo vive {o}: a veces es solo estilo.', 'No compenses escribiendo aún más.'] },
@@ -133,7 +197,7 @@ export function insights(i: Inputs): Pick<Report['insights'], 'styles' | 'move'>
         : io - im >= 12
           ? 'otherMore'
           : 'balanced';
-  const tpl = MOVES[groupOf(i.ctx.opts.relation)][situation];
+  const tpl = tr({ es: MOVES_ES, en: MOVES_EN })[groupOf(i.ctx.opts.relation)][situation];
   const move = {
     title: tpl.title.replaceAll('{o}', P(o)),
     steps: tpl.steps.filter(Boolean).map((s) => s.replaceAll('{o}', P(o))),

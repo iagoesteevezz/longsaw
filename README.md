@@ -85,7 +85,7 @@ De momento no: solo chats entre dos personas.
 <details>
 <summary><b>¿En qué idiomas?</b></summary>
 
-Lee exports de WhatsApp en español e inglés, de iPhone y Android, con cualquier formato de fecha y hora. Los avisos de multimedia se reconocen también en portugués, francés, alemán e italiano.
+La web y el informe están en español y en inglés: se elige solo según el idioma de tu sistema y puedes cambiarlo con el botón ES/EN. Lee exports de WhatsApp en español e inglés, de iPhone y Android, con cualquier formato de fecha y hora. Los avisos de multimedia se reconocen también en portugués, francés, alemán e italiano.
 </details>
 
 <details>

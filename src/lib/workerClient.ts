@@ -2,7 +2,7 @@
  * Cliente tipado del Web Worker. Envuelve postMessage en promesas para que la
  * UI pueda hacer `await client.parse(file)` y `await client.analyze(opts)`.
  */
-import type { AnalysisOptions, AuthorIndex, LocaleCode, Participant, Platform, Report } from '../core/types';
+import type { AnalysisOptions, AuthorIndex, LocaleCode, ParseWarning, Participant, Platform, Report } from '../core/types';
 
 export interface ChatSummary {
   participants: Participant[];
@@ -12,7 +12,7 @@ export interface ChatSummary {
   totalMessages: number;
   firstTs: number;
   lastTs: number;
-  warnings: string[];
+  warnings: ParseWarning[];
 }
 
 export type ProgressStep = 'read' | 'stats' | 'patterns' | 'report';

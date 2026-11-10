@@ -10,8 +10,9 @@
  * los mensajes (haría falta un modelo de NER).
  */
 import type { AuthorIndex } from './types';
+import { tr } from './i18n';
 
-const LABEL: Record<AuthorIndex, string> = { 0: 'Persona A', 1: 'Persona B' };
+const LABEL = (): Record<AuthorIndex, string> => tr({ es: { 0: 'Persona A', 1: 'Persona B' }, en: { 0: 'Person A', 1: 'Person B' } });
 
 function escapeRe(s: string) {
   return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -22,7 +23,7 @@ export function makeScrubber(
   names: [string, string],
   alias?: string,
   meIndex?: AuthorIndex,
-  labels: Record<AuthorIndex, string> = LABEL,
+  labels: Record<AuthorIndex, string> = LABEL(),
 ) {
   const nameRules: [RegExp, string][] = [];
   const add = (fragment: string, label: string) => {
@@ -43,12 +44,12 @@ export function makeScrubber(
 
   const PII: [RegExp, string][] = [
     [/[\w.+-]+@[\w-]+\.[\w.-]+/g, '[EMAIL]'],
-    [/https?:\/\/\S+|www\.\S+/gi, '[ENLACE]'],
+    [/https?:\/\/\S+|www\.\S+/gi, tr({ es: '[ENLACE]', en: '[LINK]' })],
     [/\b[A-Z]{2}\d{2}(?:\s?\d{4}){4,6}\b/g, '[IBAN]'],
-    [/\b\d{8}[A-HJ-NP-TV-Z]\b|\b[XYZ]\d{7}[A-HJ-NP-TV-Z]\b/gi, '[DNI]'],
-    [/\+?\d[\d\s().-]{7,}\d/g, '[TELÉFONO]'],
-    [/@\S+/g, '[MENCIÓN]'],
-    [/\b\d{5,}\b/g, '[NÚMERO]'],
+    [/\b\d{8}[A-HJ-NP-TV-Z]\b|\b[XYZ]\d{7}[A-HJ-NP-TV-Z]\b/gi, tr({ es: '[DNI]', en: '[ID]' })],
+    [/\+?\d[\d\s().-]{7,}\d/g, tr({ es: '[TELÉFONO]', en: '[PHONE]' })],
+    [/@\S+/g, tr({ es: '[MENCIÓN]', en: '[MENTION]' })],
+    [/\b\d{5,}\b/g, tr({ es: '[NÚMERO]', en: '[NUMBER]' })],
   ];
 
   return (text: string): string => {

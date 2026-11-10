@@ -7,6 +7,7 @@ import { useRef, useState, type ReactNode } from 'react';
 import type { Saved } from '../lib/storage';
 import { ChatToChart } from '../components/ChatToChart';
 import { useReveal } from '../components/ui';
+import { Wordmark } from '../components/Logo';
 
 function Reveal({ children, className = '', variant = '' }: { children: ReactNode; className?: string; variant?: '' | 'from-left' | 'from-right' | 'zoom' }) {
   const ref = useReveal<HTMLDivElement>();
@@ -100,12 +101,7 @@ export function UploadPage(props: {
       <section className={`wa-gradient relative overflow-hidden text-white transition-shadow ${drag ? 'drop-glow' : ''}`}>
         <div className="mx-auto max-w-6xl px-5 pb-16 pt-6 sm:px-8 lg:pb-24">
           <header className="flex items-center justify-between">
-            <span className="flex items-center gap-2 text-xl font-extrabold tracking-tight">
-              <span className="grid h-9 w-9 place-items-center rounded-full bg-wa-green text-wa-ink" aria-hidden>
-                <svg viewBox="0 0 24 24" className="h-5 w-5" fill="currentColor"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3h11A2.5 2.5 0 0 1 20 5.5v8a2.5 2.5 0 0 1-2.5 2.5H10l-4.2 3.6c-.6.5-1.8.2-1.8-.8z" /></svg>
-              </span>
-              longsaw
-            </span>
+            <Wordmark className="text-[1.7rem]" markClassName="h-10 w-10 rounded-[0.6rem] ring-1 ring-white/15" />
             <a href="#/privacidad" className="press rounded-full bg-white/12 px-4 py-2 text-sm font-bold ring-1 ring-white/20 hover:bg-white/20">
               Privacidad
             </a>

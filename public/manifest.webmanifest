@@ -1,0 +1,16 @@
+{
+  "name": "longsaw · ¿Qué dice vuestro chat?",
+  "short_name": "longsaw",
+  "description": "Analiza tu chat de WhatsApp en tu propio navegador.",
+  "lang": "es",
+  "start_url": ".",
+  "scope": ".",
+  "display": "standalone",
+  "background_color": "#ece5dd",
+  "theme_color": "#075e54",
+  "icons": [
+    { "src": "favicon.svg", "sizes": "any", "type": "image/svg+xml" },
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}

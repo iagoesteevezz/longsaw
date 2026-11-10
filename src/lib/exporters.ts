@@ -85,7 +85,37 @@ const pdfText = (s: string) =>
 
 type Pdf = InstanceType<(typeof import('jspdf'))['jsPDF']>;
 
-function drawCover(pdf: Pdf, cover: PdfCover) {
+const MARK_SVG =
+  '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" rx="112" fill="#075E54"/><path d="M256 86c-93 0-168 68-168 152 0 45 21 85 55 113l-14 61 70-31c17 5 36 8 57 8 93 0 168-68 168-151S349 86 256 86z" fill="#25D366"/><g fill="#075E54"><rect x="162" y="226" width="34" height="62" rx="12"/><rect x="239" y="168" width="34" height="120" rx="12"/><rect x="316" y="200" width="34" height="88" rx="12"/></g></svg>';
+
+/** Logotipo (marca + "longsaw" en Fredoka, en blanco) como PNG para la portada. */
+async function brandPng(): Promise<{ url: string; ratio: number } | null> {
+  try {
+    await document.fonts.load('600 200px "Fredoka Variable"');
+    const img = new Image();
+    img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(MARK_SVG);
+    await img.decode();
+    const canvas = document.createElement('canvas');
+    canvas.width = 1400;
+    canvas.height = 512;
+    const ctx = canvas.getContext('2d')!;
+    ctx.drawImage(img, 0, 0, 512, 512);
+    ctx.font = '600 230px "Fredoka Variable", sans-serif';
+    ctx.fillStyle = '#ffffff';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('longsaw', 580, 262);
+    const w = Math.ceil(580 + ctx.measureText('longsaw').width + 8);
+    const out = document.createElement('canvas');
+    out.width = w;
+    out.height = 512;
+    out.getContext('2d')!.drawImage(canvas, 0, 0);
+    return { url: out.toDataURL('image/png'), ratio: w / 512 };
+  } catch {
+    return null;
+  }
+}
+
+function drawCover(pdf: Pdf, cover: PdfCover, brand: { url: string; ratio: number } | null) {
   const W = pdf.internal.pageSize.getWidth();
   const H = pdf.internal.pageSize.getHeight();
   const M = 16;
@@ -103,12 +133,16 @@ function drawCover(pdf: Pdf, cover: PdfCover) {
   pdf.circle(W - 40, 100, 14, 'F');
 
   ink([255, 255, 255]);
-  pdf.setFont('helvetica', 'bold');
-  pdf.setFontSize(13);
-  pdf.text('longsaw', M, 22);
+  if (brand) {
+    pdf.addImage(brand.url, 'PNG', M, 12, 11 * brand.ratio, 11);
+  } else {
+    pdf.setFont('helvetica', 'bold');
+    pdf.setFontSize(13);
+    pdf.text('longsaw', M, 22);
+  }
   pdf.setFont('helvetica', 'normal');
   pdf.setFontSize(10);
-  pdf.text('INFORME DE CHAT', M, 29);
+  pdf.text('INFORME DE CHAT', M, 31);
 
   pdf.setFont('helvetica', 'bold');
   pdf.setFontSize(38);
@@ -189,7 +223,7 @@ export async function exportPdf(nodes: HTMLElement[], cover: PdfCover) {
   const pdf = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait' });
   const W = pdf.internal.pageSize.getWidth();
   const H = pdf.internal.pageSize.getHeight();
-  drawCover(pdf, cover);
+  drawCover(pdf, cover, await brandPng());
 
   const images: { png: string; width: number; height: number }[] = [];
   for (const node of nodes) {

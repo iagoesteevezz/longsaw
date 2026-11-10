@@ -7,6 +7,7 @@ import { useEffect, useRef, useState, type ReactNode } from 'react';
 import type { AuthorIndex, Excerpt, Pair } from '../core/types';
 import { formatDateTime } from '../core/format';
 import { useNames } from '../lib/names';
+import { LogoMark } from './Logo';
 
 /* ------------------------------ Colores ------------------------------ */
 
@@ -91,8 +92,11 @@ export function Card(props: {
       {props.footnote && <div className="mt-5 text-sm leading-snug opacity-70">{props.footnote}</div>}
 
       <div className="export-only mt-6 items-center justify-between text-xs font-bold opacity-60">
-        <span>longsaw · analizado en el navegador</span>
-        <span>💬</span>
+        <span className="inline-flex items-center gap-1.5">
+          <LogoMark className="h-5 w-5" />
+          <span className="font-brand text-sm font-semibold">longsaw</span>
+        </span>
+        <span>analizado en el navegador</span>
       </div>
     </section>
   );

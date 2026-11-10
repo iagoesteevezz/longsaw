@@ -8,6 +8,7 @@
  */
 @theme {
   --font-sans: 'Bricolage Grotesque Variable', ui-sans-serif, system-ui, sans-serif;
+  --font-brand: 'Fredoka Variable', 'Bricolage Grotesque Variable', ui-rounded, sans-serif;
   --color-ink: #0b1f1c;
   --color-paper: #ece5dd;
   --color-wa-green: #25d366;

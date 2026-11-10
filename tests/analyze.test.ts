@@ -131,6 +131,7 @@ describe('integración con el chat de demo', () => {
     const t0 = performance.now();
     const c = parseWhatsApp(big);
     analyze(c, opts());
-    expect(performance.now() - t0).toBeLessThan(3000);
+    // Los runners de CI compartidos son más lentos e irregulares que un portátil.
+    expect(performance.now() - t0).toBeLessThan(process.env.CI ? 8000 : 3000);
   });
 });

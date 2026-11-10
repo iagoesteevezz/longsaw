@@ -9,6 +9,8 @@ import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
 
 export default defineConfig({
+  // GitHub Pages sirve la web en /longsaw/ (ver .github/workflows/pages.yml).
+  base: process.env.BASE_PATH ?? '/',
   plugins: [react(), tailwindcss()],
   worker: { format: 'es' },
   test: {

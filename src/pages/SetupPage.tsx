@@ -14,6 +14,7 @@ import { isSelfPlaceholder } from '../core/selfName';
 import type { ChatSummary } from '../lib/workerClient';
 import { RELATIONS } from '../lib/relations';
 import { Ticks } from '../components/ChatToChart';
+import { LogoMark } from '../components/Logo';
 
 type Step = 'me' | 'name' | 'relation' | 'alias' | 'confirm';
 const ANSWER_ORDER = ['me', 'name', 'relation', 'alias'] as const;
@@ -174,11 +175,9 @@ export function SetupPage(props: { summary: ChatSummary; onSubmit: (o: AnalysisO
               <path d="M15 5l-7 7 7 7" />
             </svg>
           </button>
-          <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-wa-green text-wa-ink" aria-hidden>
-            <svg viewBox="0 0 24 24" className="h-5 w-5" fill="currentColor"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3h11A2.5 2.5 0 0 1 20 5.5v8a2.5 2.5 0 0 1-2.5 2.5H10l-4.2 3.6c-.6.5-1.8.2-1.8-.8z" /></svg>
-          </span>
+          <LogoMark className="h-10 w-10 shrink-0 rounded-full ring-1 ring-white/20" />
           <div className="min-w-0 flex-1 leading-tight">
-            <p className="text-lg font-extrabold">longsaw</p>
+            <p className="font-brand text-xl font-semibold">longsaw</p>
             <p className="text-sm font-semibold text-white/75" aria-hidden>{typing ? 'escribiendo…' : 'en línea'}</p>
           </div>
         </div>

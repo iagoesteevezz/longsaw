@@ -21,6 +21,7 @@
 - **Sin backend y sin base de datos.** No hay nada que guardar en servidor: no hay cuentas, ni pagos, ni IA. El informe vive en el navegador.
 
 ### Despliegue más barato
+- GitHub Pages (gratis): `.github/workflows/pages.yml` pasa los tests y publica en cada push a `main`, compilando con `BASE_PATH=/longsaw/`. Pages no admite cabeceras propias, así que ahí no se aplica la CSP de `_headers`; la app igualmente no hace peticiones externas (lo vigila `tests/privacy.test.ts`).
 - Cloudflare Pages o Netlify (gratis): solo hay que servir `dist/`. `public/_headers` ya trae una CSP estricta. Coste de operación: cero.
 
 ## 3. Estructura de carpetas

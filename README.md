@@ -13,13 +13,13 @@
 </p>
 
 <p align="center">
-  <a href="https://iagoesteevezz.github.io/longsaw/"><b>👉 Pruébala ahora en el navegador</b></a>
+  <a href="https://iagoestevez.com/longsaw/"><b>👉 Pruébala ahora en el navegador</b></a>
   <br>
   <sub>No hace falta instalar nada. ¿No quieres usar un chat tuyo? Pulsa <b>«Probar con un chat de ejemplo»</b>.</sub>
 </p>
 
 <p align="center">
-  <a href="https://iagoesteevezz.github.io/longsaw/"><img src="docs/screenshots/portada.png" alt="Portada de longsaw: «¿Qué dice vuestro chat de vosotros?» junto a un móvil con una conversación de WhatsApp" width="880"></a>
+  <a href="https://iagoestevez.com/longsaw/"><img src="docs/screenshots/portada.png" alt="Portada de longsaw: «¿Qué dice vuestro chat de vosotros?» junto a un móvil con una conversación de WhatsApp" width="880"></a>
 </p>
 
 ## Cómo funciona

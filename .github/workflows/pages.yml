@@ -1,4 +1,4 @@
-# Publica la web en GitHub Pages (https://iagoesteevezz.github.io/longsaw/) en cada push a main.
+# Publica la web en GitHub Pages (https://iagoestevez.com/longsaw/) en cada push a main.
 # Requiere una sola vez: Settings → Pages → Source: "GitHub Actions".
 name: Deploy a GitHub Pages
 

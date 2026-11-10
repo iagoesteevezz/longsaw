@@ -13,6 +13,7 @@ coverage
 *.local
 
 # Configuración local de Claude Code (permisos de esta máquina)
+.claude/settings.json
 .claude/settings.local.json
 
 # Chats reales: nunca al repo. Los de ejemplo inventados viven en tests/fixtures/

@@ -40,3 +40,7 @@ npm run preview        # sirve dist/ en local para probarlo
 ## Cómo exportar un chat de WhatsApp
 - **iPhone**: abre el chat → nombre del contacto → Exportar chat → Sin archivos. Se genera un `.zip`. Elige **sin archivos**: fotos, audios y stickers se cuentan igual a partir de los avisos “imagen omitida”, “audio omitido”…
 - **Android**: abre el chat → ⋮ → Más → Exportar chat → Sin archivos. Se genera un `.txt`.
+
+## Licencia
+
+[MIT](LICENSE). longsaw no está afiliado a WhatsApp.

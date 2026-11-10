@@ -62,7 +62,7 @@ function timeline(): [number, Partial<State>][] {
 const STEPS = timeline();
 const LOOP_MS = STEPS[STEPS.length - 1][0] + 400;
 
-function Ticks({ read }: { read: boolean }) {
+export function Ticks({ read }: { read: boolean }) {
   return (
     <svg viewBox="0 0 16 11" className={`tick ${read ? 'read' : ''}`} aria-hidden>
       <path d="M11.1 0.7 4.9 7.9 2.3 5.4l-.9 1L4.9 9.8l7.1-8.3z" fill="currentColor" />

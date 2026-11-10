@@ -90,6 +90,8 @@ export interface AnalysisOptions {
   relation: Relation;
   /** Alias con el que el usuario quiere ver a la otra persona. */
   otherAlias: string;
+  /** Nombre del usuario cuando el export lo trae como "Tú"/"You". */
+  myAlias?: string;
   /** Silencio a partir del cual empieza una "nueva conversación". */
   sessionGapHours: number;
   /** Horas sin respuesta para considerar "visto" (estimación). */

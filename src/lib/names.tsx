@@ -32,8 +32,8 @@ function firstName(n: string) {
 }
 
 /** Nombres visibles [persona 0, persona 1]. También los usa la portada del PDF. */
-export function displayNames(realNames: Pair<string>, me: AuthorIndex, alias: string, hidden: boolean): Pair<string> {
-  const myName = hidden ? 'Persona A' : firstName(realNames[me]);
+export function displayNames(realNames: Pair<string>, me: AuthorIndex, alias: string, hidden: boolean, myAlias?: string): Pair<string> {
+  const myName = hidden ? 'Persona A' : myAlias?.trim() || firstName(realNames[me]);
   const otherName = hidden ? 'Persona B' : alias || firstName(realNames[me === 0 ? 1 : 0]);
   return me === 0 ? [myName, otherName] : [otherName, myName];
 }
@@ -47,13 +47,16 @@ export function NamesProvider(props: {
   realNames: Pair<string>;
   me: AuthorIndex;
   alias: string;
+  myAlias?: string;
   hidden: boolean;
   children: ReactNode;
 }) {
-  const { realNames, me, alias, hidden } = props;
+  const { realNames, me, alias, myAlias, hidden } = props;
   const value = useMemo<NamesCtx>(() => {
-    const names = displayNames(realNames, me, alias, hidden);
-    const scrub = makeScrubber(realNames, alias, me, { 0: names[0], 1: names[1] });
+    const names = displayNames(realNames, me, alias, hidden, myAlias);
+    const known: Pair<string> = [...realNames];
+    if (myAlias?.trim()) known[me] = myAlias.trim();
+    const scrub = makeScrubber(known, alias, me, { 0: names[0], 1: names[1] });
     return {
       names,
       me,
@@ -61,7 +64,7 @@ export function NamesProvider(props: {
       fill: (s) => fillNames(s, names),
       quote: (s) => (hidden ? scrub(s) : s),
     };
-  }, [realNames, me, alias, hidden]);
+  }, [realNames, me, alias, myAlias, hidden]);
   return <Ctx.Provider value={value}>{props.children}</Ctx.Provider>;
 }
 

@@ -65,7 +65,7 @@ export function ReportPage(props: {
     withExportMode(async () => {
       setBusy('Generando PDF…');
       try {
-        const names = displayNames(r.meta.participants, o.me, o.otherAlias, !showNamesOnShare);
+        const names = displayNames(r.meta.participants, o.me, o.otherAlias, !showNamesOnShare, o.myAlias);
         const fill = (s: string) => fillNames(s, names);
         const nodes = [...(list.current?.querySelectorAll<HTMLElement>('[data-card]') ?? [])];
         await exportPdf(nodes, {
@@ -111,7 +111,7 @@ export function ReportPage(props: {
   const otherName = hidden ? 'Persona B' : o.otherAlias;
 
   return (
-    <NamesProvider realNames={r.meta.participants} me={o.me} alias={o.otherAlias} hidden={hidden}>
+    <NamesProvider realNames={r.meta.participants} me={o.me} alias={o.otherAlias} myAlias={o.myAlias} hidden={hidden}>
       <div className="mx-auto max-w-xl px-4 pb-24">
         {/* Barra superior */}
         <nav className="export-hide sticky top-0 z-30 -mx-4 flex items-center gap-2 overflow-x-auto bg-paper/85 px-4 py-3 backdrop-blur">
